@@ -34,6 +34,7 @@ enum {
   // AREA_3,
   // AREA_4,
 // #endif
+  AREA_NUM,
 };
 
 /* Exported constants --------------------------------------------------------*/
@@ -201,6 +202,8 @@ enum {
 #define EXTROM_FLASH_SIZE_4MB        0x400000
 #define EXTROM_FLASH_SIZE_8MB        0x800000
 
+
+/* External Flash size */
 #if (NUM_AREA == (1))
 #define EXTROM_FLASH_SIZE          (EXTROM_FLASH_SIZE_2MB)
 #else if (NUM_AREA == (2))
@@ -208,9 +211,6 @@ enum {
 // #else if (NUM_AREA == (4))
 // #define EXTROM_FLASH_SIZE          (EXTROM_FLASH_SIZE_8MB)
 #endif
-
-#define EXTROM_FLASH_ADDR_MASK     (EXTROM_FLASH_SIZE-1)  // [0x000000-0x3fffff]
-#define EXTROM_AREA_SIZE_2MB       0x200000
 
 #if (NUM_AREA >= (1))
 #define EXTROM_AREA_1_ADDRESS      0x90000000
@@ -222,6 +222,13 @@ enum {
 // #define EXTROM_AREA_3_ADDRESS      0x90400000  // Reserved
 // #define EXTROM_AREA_4_ADDRESS      0x90600000  // Reserved
 // #endif
+
+
+#define EXTROM_FLASH_ADDR_MASK     (EXTROM_FLASH_SIZE-1)  // [0x000000-0x3fffff]
+
+/* External area size */
+#define EXTROM_AREA_SIZE_2MB       0x200000
+
 
 #define QSPI_START_ADDRESS        (EXTROM_FLASH_ADDR_MASK & EXTROM_START_ADDRESS)
 #define QSPI_END_ADDRESS          (EXTROM_END_ADDRESS & EXTROM_START_ADDRESS)

@@ -41,10 +41,6 @@ static HAL_StatusTypeDef QSPI_Init(QSPI_HandleTypeDef *hqspi);
 static HAL_StatusTypeDef QSPI_Erase(QSPI_HandleTypeDef *hqspi, __IO uint32_t address);
 static HAL_StatusTypeDef QSPI_Write(QSPI_HandleTypeDef *hqspi, __IO uint32_t address, uint8_t *pData, uint32_t size);
 static HAL_StatusTypeDef QSPI_Read(QSPI_HandleTypeDef *hqspi, __IO uint32_t address, uint8_t *pData, uint32_t size);
-// static void QSPI_Measure_Erase(QSPI_HandleTypeDef *hqspi);
-// static void QSPI_Measure_Write(QSPI_HandleTypeDef *hqspi);
-// static void QSPI_Measure_Read(QSPI_HandleTypeDef *hqspi);
-
 
 /**
   * @brief  Command completed callbacks.
@@ -434,217 +430,6 @@ static HAL_StatusTypeDef QSPI_Read(QSPI_HandleTypeDef *hqspi, __IO uint32_t addr
   return status;
 }
 
-/**
-  * @brief  
-  * @param  hqspi: QSPI handle
-  * @retval None
-  */
-static void QSPI_Measure_Erase(QSPI_HandleTypeDef *hqspi)
-{
-  // QSPI_CommandTypeDef      sCommand;
-  // __IO uint32_t qspi_addr = 0;
-  // uint32_t size = EXTROM_AREA_SIZE_2MB;
-  // uint32_t block_size = 0x10000; // EXTROM_ERASE_BLOCK_SIZE_64KB
-  // uint32_t count;
-  // volatile uint32_t uwStart, uwEnd;
-  
-  // sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  // sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-  // sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-  // sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-  // sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-  // sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-
-  // printf("Erased size 0x%x, block size 0x%x \n", size, block_size);
-
-  // count = size;
-  // uwStart = HAL_GetTick();
-
-  // while(count > 0)
-  // {
-    // CmdCplt = 0;
-
-    // /* Enable write operations ------------------------------------------- */
-    // QSPI_WriteEnable(hqspi);
-
-    // /* Erasing Sequence -------------------------------------------------- */
-    // sCommand.Instruction = SECTOR_ERASE_CMD;
-    // sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
-    // sCommand.Address     = qspi_addr;
-    // sCommand.DataMode    = QSPI_DATA_NONE;
-    // sCommand.DummyCycles = 0;
-
-    // /* printf("qspi_addr 0x%x\n", qspi_addr); */
-// /* HAL_Delay(100); */
-    // if (HAL_QSPI_Command_IT(hqspi, &sCommand) != HAL_OK)
-    // {
-      // Error_Handler();
-    // }
-    // while(CmdCplt == 0);
-
-    // count -= block_size;
-    // qspi_addr += block_size;
-  // }
-
-  // if(CmdCplt != 0)
-  // {
-    // StatusMatch = 0;
-
-    // /* Configure automatic polling mode to wait for end of erase ------- */  
-    // QSPI_AutoPollingMemReady(hqspi);
-    // while(StatusMatch == 0);   
-  // }
-// QSPI_AutoPollingMemReady(hqspi);
-  // uwEnd = HAL_GetTick();
-  // (uwEnd - uwStart > 1) ? printf("Erasing Sequence: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
-}
-
-
-/**
-  * @brief  
-  * @param  hqspi: QSPI handle
-  * @retval None
-  */
-static void QSPI_Measure_Write(QSPI_HandleTypeDef *hqspi)
-{
-  // QSPI_CommandTypeDef      sCommand;
-  // uint32_t qspi_addr_tx = 0;
-  // uint32_t block_size_tx = EXTROM_WRITE_BLOCK_SIZE_256BYTE;
-  // uint32_t total_size_tx = EXTROM_AREA_SIZE_2MB;
-  // uint8_t *flash_addr_tx = NULL;
-  // uint32_t tx_count;
-  // volatile uint32_t uwStart, uwEnd;
-
-  // sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  // sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-  // sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-  // sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-  // sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-  // sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-  
-  // /* Create write data buffer */
-  // uint8_t* p = ram_data;
-  // for(int i = 0; i < EXTROM_WRITE_BLOCK_SIZE_256BYTE; i += 32)
-  // {
-    // memcpy(p, "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
-    // p += 32;
-  // }
-  
-  // flash_addr_tx = (uint8_t *)ram_data;
-  // tx_count = total_size_tx;
-
-  // uwStart = HAL_GetTick(); 
-  // printf("Write QSPI: size 0x%x, block size 0x%x\n", total_size_tx, block_size_tx);
-
-  // while(tx_count > 0)
-  // {
-    // TxCplt = 0;
-
-    // /* Enable write operations ----------------------------------------- */
-    // QSPI_WriteEnable(hqspi);
-
-    // /* Writing Sequence ------------------------------------------------ */
-    // sCommand.Instruction = QUAD_IN_FAST_PROG_CMD;
-    // sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
-    // sCommand.Address     = qspi_addr_tx;
-    // sCommand.DataMode    = QSPI_DATA_4_LINES;
-    // sCommand.NbData      = EXTROM_WRITE_BLOCK_SIZE_256BYTE;
-
-    // /* printf("qspi_addr_tx 0x%x\n", qspi_addr_tx); */
-    // if (HAL_QSPI_Command(hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-    // {
-      // Error_Handler();
-    // }
-
-    // if (HAL_QSPI_Transmit_DMA(hqspi, ram_data/* flash_addr_tx */) != HAL_OK)
-    // {
-      // Error_Handler();
-    // }
-
-    // /* Wait for callback */
-    // while(TxCplt == 0);
-          
-    // tx_count -= EXTROM_WRITE_BLOCK_SIZE_256BYTE;
-    // qspi_addr_tx += EXTROM_WRITE_BLOCK_SIZE_256BYTE;
-  // }
- 
-  // if(TxCplt != 0)
-  // {
-    // TxCplt = 0;
-    // StatusMatch = 0;
-
-    // /* Configure automatic polling mode to wait for end of program ----- */  
-    // QSPI_AutoPollingMemReady(hqspi);
-    // while(StatusMatch == 0);
-  // }
-
-  // uwEnd = HAL_GetTick();
-  // (uwEnd - uwStart > 1) ? printf("Writing Sequence: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Writing Sequence: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
-}
-
-
-
-/**
-  * @brief  
-  * @param  hqspi: QSPI handle
-  * @retval None
-  */
-static void QSPI_Measure_Read(QSPI_HandleTypeDef *hqspi)
-{
-  // /* Copy code from QSPI flash to RAM */
-  // uint8_t* qspi_buf_rx = (uint8_t*)ram_data_rx;
-  // uint8_t* qspi_addr_rx = (uint8_t*)QSPI_START_ADDRESS;
-  // uint32_t total_size_rx = EXTROM_AREA_SIZE_2MB;
-  // uint8_t *flash_addr_rx = NULL;
-  // int block_size_rx = EXTROM_READ_BLOCK_SIZE_64KB;
-  // int i;
-  // uint32_t uwStart, uwEnd;
-  
-  // uwStart = HAL_GetTick();
-  // QSPI_CommandTypeDef      sCommand;
-  // QSPI_MemoryMappedTypeDef sMemMappedCfg;
-
-  // uwStart = HAL_GetTick();
-  
-  // sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
-  // sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
-  // sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-  // sCommand.DdrMode           = QSPI_DDR_MODE_DISABLE;
-  // sCommand.DdrHoldHalfCycle  = QSPI_DDR_HHC_ANALOG_DELAY;
-  // sCommand.SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
-
-  // /* Reading Sequence ------------------------------------------------ */
-  // sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
-  // sCommand.DataMode    = QSPI_DATA_4_LINES;
-  // sCommand.Instruction = QUAD_OUT_FAST_READ_CMD;
-  // sCommand.DummyCycles = DUMMY_CLOCK_CYCLES_READ_QUAD;
-
-  // sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
-
-  // if (HAL_QSPI_MemoryMapped(hqspi, &sCommand, &sMemMappedCfg) != HAL_OK)
-  // {
-    // Error_Handler();
-  // }
-
-  // printf("Read QSPI: address 0x%p, size 0x%x block size 0x%x \n", qspi_addr_rx, total_size_rx, block_size_rx);
-  // for (i = 0; i < total_size_rx; i+=block_size_rx)
-  // {
-    // memcpy(qspi_buf_rx, qspi_addr_rx, block_size_rx);
-    // qspi_addr_rx += block_size_rx;	
-  // }
-  // uwEnd = HAL_GetTick();
-  // (uwEnd - uwStart > 1) ? printf("Reading Sequence: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
-  
-  // /* Read data in QSPI Flash */
-  // uint8_t* p = (uint8_t*)QSPI_START_ADDRESS;
-  // for (i = 0; i < 10; i++)
-  // {
-    // printf("%d.[%08p] %02x%02x%02x%02x %02x%02x%02x%02x    %c%c%c%c %c%c%c%c \n",
-             // i, p, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[0], p[1], p[2],
-             // p[3], p[4], p[5], p[6], p[7]);
-    // p += 8;	
-  // }
-}
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -747,7 +532,8 @@ int32_t EXTROM_Erase(__IO uint32_t start, uint32_t num_bytes)
 int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
 {
   __IO uint32_t qspi_addr, flash_addr;
-  uint32_t block_size = EXTROM_WRITE_BLOCK_SIZE_256BYTE;
+  uint32_t block_size;
+  const uint32_t block_size_max = EXTROM_WRITE_BLOCK_SIZE_256BYTE;
   uint32_t count;
   QSPI_HandleTypeDef *hqspi = &QSPIHandle;
   
@@ -766,6 +552,14 @@ int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
 
     do
     {
+      if(count < block_size_max)
+      {
+        block_size = count;
+      } else
+      {
+        block_size = block_size_max;
+      }
+      
       /* Write by 256 Bytes block */
       if (QSPI_Write(hqspi, qspi_addr, (uint8_t*)flash_addr, block_size) != HAL_OK)
       {
@@ -822,7 +616,7 @@ int32_t EXTROM_Read(__IO uint32_t src, uint32_t dst, uint32_t num_bytes)
       {
         block_size = block_size_max;
       }
-      
+
       /* Read by 128 Bytes block */
       if (QSPI_Read(hqspi, qspi_addr, (uint8_t*)flash_addr, block_size) != HAL_OK)
       {

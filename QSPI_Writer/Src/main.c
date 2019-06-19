@@ -93,7 +93,7 @@
 QSPI_HandleTypeDef QSPIHandle;
 static __IO uint8_t CmdCplt, RxCplt, TxCplt, StatusMatch;
 // __IO uint8_t FlashReturn, FlashErrorReturn;
-static uint8_t ram_data[READ_BLOCK_SIZE_64KB/2];//[4*EXTROM_WRITE_BLOCK_SIZE_256BYTE];
+static uint8_t ram_data[8];//[4*EXTROM_WRITE_BLOCK_SIZE_256BYTE];
 static uint8_t ram_data_rx[READ_BLOCK_SIZE_64KB];
 uint8_t program_write[64] = "456789ABCDEFGHIKLMNOPQRSTUVW+-*/456789ABCDEFGHIKLMNOPQRSTUVW";  // (256 bits)
 uint32_t uwStart, uwEnd;
@@ -127,17 +127,21 @@ static void CPU_CACHE_Enable(void);
 static inline void Flash_Measure_Erase(void);
 static inline void Flash_Measure_Write(void);
 static inline void Flash_Measure_Read(void);
-
+static void Update_Task(void);
 
 static inline void display_memory(uint32_t address);
+static inline void display_qspi_memory(uint32_t address);
 static inline void create_write_data(uint8_t* buf, uint32_t buf_size, uint8_t* str, uint32_t str_len);
 
-static FWUPDATE_ERR_CODE FWUPDATE_Download1(uint32_t src);
+
 static void BlinkLed(void);
 
 // FLASH_EraseProgram
 // static uint32_t GetSector(uint32_t Address);
-
+static struct Program_ST {
+  uint32_t size;
+  __IO uint32_t *data;
+} dump_program;
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -171,61 +175,48 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED3);
   
+  Update_Task();
 
-  FWUPDATE_InitFlash();
-  
-  /* Initialize QuadSPI ------------------------------------------------------ */
-  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
-  {
-    printf("FWUPDATE_InitQSPI error\n");
-    Error_Handler();
-  }
-  
-  FWUPDATE_Init();
-  
-  
-    /* Create write data buffer */
-  uint8_t* p = ram_data;
+  /* Create write data buffer */
   memset(ram_data, 'x', sizeof(ram_data));
   create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
 
-  memset(qspi_wr_buf, '&', sizeof(qspi_wr_buf));
+    memset(qspi_wr_buf, '&', sizeof(qspi_wr_buf));
   create_write_data(uart_rx_buf, sizeof(uart_rx_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
   
-  
-  
 
-  __IO uint32_t qspi_addr = 0x90000000;  
-  /* Erase 2MB of QSPI Flash - Area 1+2*/  
-  uwStart = HAL_GetTick();
-  if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
-  {
-    printf("EXTROM_Erase 1 error\n");
-    Error_Handler();
-  }
-  uwEnd = HAL_GetTick();
+  // __IO uint32_t qspi_addr = 0x90000000;  
+  // /* Erase 2MB of QSPI Flash - Area 1+2*/  
+  // uwStart = HAL_GetTick();
+  // if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
+  // {
+    // printf("EXTROM_Erase 1 error\n");
+    // Error_Handler();
+  // }
+  // uwEnd = HAL_GetTick();
   
-  (uwEnd - uwStart > 1) ? printf("Erasing Sequence1: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence1: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  // (uwEnd - uwStart > 1) ? printf("Erasing Sequence1: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence1: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
 
   
-  uwStart = HAL_GetTick();
-  if(EXTROM_Erase(EXTROM_AREA_2_ADDRESS, EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
-  {
-    printf("EXTROM_Erase error 0x%08x\n", EXTROM_AREA_2_ADDRESS);
-    Error_Handler();
-  }
-  uwEnd = HAL_GetTick();
+  // uwStart = HAL_GetTick();
+  // if(EXTROM_Erase(EXTROM_AREA_2_ADDRESS, EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
+  // {
+    // printf("EXTROM_Erase error 0x%08x\n", EXTROM_AREA_2_ADDRESS);
+    // Error_Handler();
+  // }
+  // uwEnd = HAL_GetTick();
   
-  (uwEnd - uwStart > 1) ? printf("Erasing Sequence2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  // (uwEnd - uwStart > 1) ? printf("Erasing Sequence2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erasing Sequence2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
 
 
-  /* Write 2MB of QSPI Flash - Area 1 */
+  
+  // /* Write 2MB of QSPI Flash - Area 1 */
   // uwStart = HAL_GetTick();
   // for(int address = EXTROM_AREA_1_ADDRESS; 
-      // address <  (EXTROM_AREA_1_ADDRESS + FW_DOWNLOAD_BUFFER_SIZE /* EXTROM_AREA_SIZE_2MB */ - 1); 
-      // address += sizeof(ram_data) )
+      // address <  (EXTROM_AREA_1_ADDRESS + EXTROM_AREA_SIZE_2MB - 1); 
+      // address += sizeof(ram_data))
   // {
-    // if(EXTROM_Write((uint32_t)&ram_data[0], address, sizeof(ram_data) ) != FLASH_ERR_OK)
+    // if(EXTROM_Write((uint32_t)&ram_data[0], address , sizeof(ram_data) ) != FLASH_ERR_OK)
     // {
       // printf("EXTROM_Write 1 error\n");
       // Error_Handler();
@@ -235,41 +226,28 @@ int main(void)
   // (uwEnd - uwStart > 1) ? printf("Writing Sequence1: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Writing Sequence: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
   
   
-  
-  /* Receive data from uart */
-  // for(int i = 0; i < 4096; i += 1024)
-  // {
-    // memcpy((void*)&qspi_wr_buf[i], uart_rx_buf, 1024);
-  // }
-  create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
-  
-  // /* Write 2MB of QSPI Flash - Area 2 */
+  /* Write 2MB of QSPI Flash - Area 2 */
   // uwStart = HAL_GetTick();
-  // for(int address = EXTROM_AREA_2_ADDRESS; 
+  // /* for(int address = EXTROM_AREA_2_ADDRESS; 
       // address < (EXTROM_AREA_2_ADDRESS + EXTROM_AREA_SIZE_2MB - 1) ; 
-      // address += 4096 )
+      // address += sizeof(ram_data )) */
+  // for(int address = EXTROM_AREA_2_ADDRESS; 
+      // address < (EXTROM_AREA_2_ADDRESS + 4*sizeof(ram_data)) ; 
+      // address += sizeof(ram_data ))
   // {
-    // if(FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]) != FWUPDATE_ERR_OK)
+    // if(EXTROM_Write((uint32_t)&ram_data[0], address , sizeof(ram_data) ) != FLASH_ERR_OK)
     // {
-      // printf("FWUPDATE_Download error 0x%08x\n", EXTROM_AREA_1_ADDRESS);
+      // printf("EXTROM_Write error 0x%08x\n", address);
       // Error_Handler();
     // }
+    
+    // display_qspi_memory(address);
   // }
   // uwEnd = HAL_GetTick();
   // (uwEnd - uwStart > 1) ? printf("Writing Sequence2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Writing Sequence2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
   
-  
-  for(int i = 0; i < 4; i++)
-  {
-    uwStart = HAL_GetTick();
-    FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]);
-    uwEnd = HAL_GetTick();
-    (uwEnd - uwStart > 1) ? printf("Downloading: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Downloading: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
  
-  }
 
- 
-  
 
   // /* Read 2MB of QSPI Flash - Area 1*/
   // uwStart = HAL_GetTick();
@@ -288,30 +266,33 @@ int main(void)
 
   // display_memory((uint32_t)&ram_data_rx[0]);
   
-  /* Read 2MB of QSPI Flash - Area 2*/
-  uwStart = HAL_GetTick();
-  for(int address = EXTROM_AREA_2_ADDRESS; 
-     address < (EXTROM_AREA_2_ADDRESS + 4096 /* EXTROM_AREA_SIZE_2MB */ - 1); 
-     address += sizeof(ram_data_rx) )
-  {
-    if(EXTROM_Read(address, (uint32_t)&ram_data_rx[0], 64*1024) != FLASH_ERR_OK)
-    {
-      printf("EXTROM_Read 1 error 0x%08x\n", address);
-      Error_Handler();
-    }
-  }
-  uwEnd = HAL_GetTick();
-  (uwEnd - uwStart > 1) ? printf("Reading Sequence 2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Reading Sequence 2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  // /* Read 2MB of QSPI Flash - Area 2*/
+  // uwStart = HAL_GetTick();
+  // for(int address = EXTROM_AREA_2_ADDRESS; 
+     // address < (EXTROM_AREA_2_ADDRESS + 4096 /* EXTROM_AREA_SIZE_2MB */ - 1); 
+     // address += sizeof(ram_data_rx) )
+  // {
+    // if(EXTROM_Read(address, (uint32_t)&ram_data_rx[0], 64*1024) != FLASH_ERR_OK)
+    // {
+      // printf("EXTROM_Read 1 error 0x%08x\n", address);
+      // Error_Handler();
+    // }
+  // }
+  // uwEnd = HAL_GetTick();
+  // (uwEnd - uwStart > 1) ? printf("Reading Sequence 2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Reading Sequence 2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
 
+// display_qspi_memory(0x90210000);
 
-  display_memory((uint32_t)&ram_data_rx[0]);
+  // display_memory((uint32_t)&ram_data_rx[0]);
+  // display_memory((uint32_t)&ram_data_rx[4096]);
+  // display_memory((uint32_t)&ram_data_rx[10000]);
   
   
   
-  printf("ram_data 0x%08x\n", ram_data);
-  printf("ram_data_rx 0x%08x\n", ram_data_rx);
-  printf("uart_rx_buf 0x%08x\n", uart_rx_buf);
-  printf("qspi_wr_buf 0x%08x\n", qspi_wr_buf);
+  // printf("ram_data 0x%08x\n", ram_data);
+  // printf("ram_data_rx 0x%08x\n", ram_data_rx);
+  // printf("uart_rx_buf 0x%08x\n", uart_rx_buf);
+  // printf("qspi_wr_buf 0x%08x\n", qspi_wr_buf);
   
   // create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW+-*/abcdefghiklmnopqrstuvw!@#$%^", 64);
   
@@ -432,6 +413,60 @@ int main(void)
   // while(1);
 }
 
+static void Update_Task(void)
+{
+  
+  FWUPDATE_InitFlash();
+  
+  /* Initialize QuadSPI ------------------------------------------------------ */
+  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
+  {
+    printf("FWUPDATE_InitQSPI error\n");
+    Error_Handler();
+  }
+  
+    // Test clear at startup
+// FWUPDATE_EraseExtFlash(AREA_1);  
+FWUPDATE_EraseExtFlash(AREA_2);
+  
+  FWUPDATE_Init();
+  
+  /* Create dump program */
+  dump_program.size = sizeof(qspi_wr_buf);
+  dump_program.data = (__IO uint32_t*)qspi_wr_buf;
+  
+
+
+  
+  FWUPDATE_Download_Config(4096*4, 4096);
+  
+  /* Receive data from uart */
+  memset(qspi_wr_buf, 0x22, sizeof(qspi_wr_buf));
+  // for(int i = 0; i < 4096; i += 1024)
+  // {
+    // memcpy((void*)&qspi_wr_buf[i], uart_rx_buf, 1024);
+  // }
+  create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
+  
+  
+  printf("qspi_wr_buf 0x%08x\n", qspi_wr_buf);
+  uint32_t download_byte = 0;
+  for(int i = 0; i < 8; i++)
+  {
+    uwStart = HAL_GetTick();
+    FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]);
+    uwEnd = HAL_GetTick();
+    download_byte += FW_DOWNLOAD_BUFFER_SIZE;
+    (uwEnd - uwStart > 1) ? printf("Downloading: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Downloading: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  }
+  
+  display_qspi_memory(0x90200000);
+  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
+  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x10000);
+  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x20000);
+ 
+  
+}
 
 /**
   * @brief  System Clock Configuration
@@ -533,6 +568,33 @@ static inline void Flash_Measure_Write(void)
     p += 32;
   }
   
+}
+
+static void display_qspi_memory(uint32_t address)
+{
+  uint8_t qspi_buf[256];
+  
+  if((address >= EXTROM_AREA_1_ADDRESS) && (address < EXTROM_AREA_2_ADDRESS + EXTROM_AREA_SIZE_2MB))
+  {
+    if(EXTROM_Read(address, (uint32_t)&qspi_buf[0], 256) != FLASH_ERR_OK)
+    {
+      printf("display_qspi_memory error 0x%08x\n", address);
+      Error_Handler();
+    }
+  }  
+
+  uint8_t* p = (uint8_t*)qspi_buf;
+  printf("\n");
+  for (int i = 0; i < 10; i++)
+  {
+    printf("%d.[%08x] %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x    %c%c%c%c %c%c%c%c %c%c%c%c %c%c%c%c\n",
+             i, address, 
+             p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15],
+             p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15] );
+    p += 16;	
+    address += 16;
+  }
+  printf("\n");
 }
 
 static inline void Flash_Measure_Read(void)
