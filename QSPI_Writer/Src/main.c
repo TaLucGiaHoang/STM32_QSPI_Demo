@@ -127,6 +127,7 @@ static void CPU_CACHE_Enable(void);
 static inline void Flash_Measure_Erase(void);
 static inline void Flash_Measure_Write(void);
 static inline void Flash_Measure_Read(void);
+static void Download_Task(void);
 static void Update_Task(void);
 
 static inline void display_memory(uint32_t address);
@@ -174,15 +175,64 @@ int main(void)
  
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED3);
+  BSP_LED_Init(LED2);
+  BSP_LED_On(LED2);
   
-  Update_Task();
+  
+    FWUPDATE_InitFlash();
+  
+  /* Initialize QuadSPI ------------------------------------------------------ */
+  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
+  {
+    printf("FWUPDATE_InitQSPI error\n");
+    Error_Handler();
+  }
+  
+  // /* Test clear at startup */
+// FWUPDATE_EraseExtFlash(AREA_1);  
+// FWUPDATE_EraseExtFlash(AREA_2);
+    // __IO uint32_t qspi_addr = 0x90000000;  
+  /* Erase 2MB of QSPI Flash - Area 1+2*/  
+  uwStart = HAL_GetTick();
+  if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, 2*EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
+  {
+    printf("EXTROM_Erase 1 error\n");
+    Error_Handler();
+  }
+  uwEnd = HAL_GetTick();
+  
+  (uwEnd - uwStart > 1) ? printf("Erase all QSPI: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erase all QSPI: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
 
-  /* Create write data buffer */
-  memset(ram_data, 'x', sizeof(ram_data));
-  create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
+  
+  printf("\nStart Hardware to run v1 ... (not implemented)\n");
+  FWUPDATE_Init();
+  printf("\nReset Hardware to run v1 ... (not implemented)\n");
+  FWUPDATE_Init();
+  printf("\nReset Hardware to download v2 ... (not implemented)\n");
+  FWUPDATE_Init();
+  Download_Task(); // v2
+  printf("\nReset Hardware to update v2 ... (not implemented)\n");
+  FWUPDATE_Init();
+  Update_Task();  // v2 
+  printf("\nReset Hardware to download v3 ... (not implemented)\n");
+  FWUPDATE_Init();
+  Download_Task(); // v3
+  printf("\nReset Hardware to update v3 ... (not implemented)\n");
+  FWUPDATE_Init();
+  Update_Task();   // v3
+  printf("\nReset Hardware to run v3... (not implemented)\n");
+  FWUPDATE_Init();
+  printf("\nReset Hardware to run v3... (not implemented)\n");
+  FWUPDATE_Init();
+  printf("\nReset Hardware to run v3... (not implemented)\n");
+  FWUPDATE_Init();
 
-    memset(qspi_wr_buf, '&', sizeof(qspi_wr_buf));
-  create_write_data(uart_rx_buf, sizeof(uart_rx_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
+  // /* Create write data buffer */
+  // memset(ram_data, 'x', sizeof(ram_data));
+  // create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
+
+  // memset(qspi_wr_buf, '&', sizeof(qspi_wr_buf));
+  // create_write_data(uart_rx_buf, sizeof(uart_rx_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
   
 
   // __IO uint32_t qspi_addr = 0x90000000;  
@@ -274,21 +324,16 @@ int main(void)
   // {
     // if(EXTROM_Read(address, (uint32_t)&ram_data_rx[0], 64*1024) != FLASH_ERR_OK)
     // {
-      // printf("EXTROM_Read 1 error 0x%08x\n", address);
+      // printf("EXTROM_Read 2 error 0x%08x\n", address);
       // Error_Handler();
     // }
   // }
   // uwEnd = HAL_GetTick();
   // (uwEnd - uwStart > 1) ? printf("Reading Sequence 2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Reading Sequence 2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  
 
 // display_qspi_memory(0x90210000);
 
-  // display_memory((uint32_t)&ram_data_rx[0]);
-  // display_memory((uint32_t)&ram_data_rx[4096]);
-  // display_memory((uint32_t)&ram_data_rx[10000]);
-  
-  
-  
   // printf("ram_data 0x%08x\n", ram_data);
   // printf("ram_data_rx 0x%08x\n", ram_data_rx);
   // printf("uart_rx_buf 0x%08x\n", uart_rx_buf);
@@ -374,9 +419,9 @@ int main(void)
 
   
   
-  // /* -6- (Bank1) Check if the programmed data is OK
-      // MemoryProgramStatus = 0: data programmed correctly
-      // MemoryProgramStatus != 0: number of words not programmed correctly ******/
+  /* -6- (Bank1) Check if the programmed data is OK
+      MemoryProgramStatus = 0: data programmed correctly
+      MemoryProgramStatus != 0: number of words not programmed correctly ******/
   // printf("Compare data write to 0x%08x with read from 0x%08x\n", FLASH_USER_START_ADDR_1, (uint32_t)ram_data_rx);
   
   // Address = (uint32_t)ram_data_rx; //FLASH_USER_START_ADDR_1;
@@ -397,13 +442,23 @@ int main(void)
   // }
   // (MemoryProgramStatus == 0) ? printf("OK\n") : printf("%d errors\n", MemoryProgramStatus);
 
-  
-  // /* display_memory(0x08000000); */
+  Address = (uint32_t)ADDR_FLASH_SECTOR_0_BANK1; 
+  while (Address < ((uint32_t)0x08100000))
+  {
+    for(Index = 0; Index<4; Index++)
+    {
+      data64 = *(uint64_t*)Address;
+      __DSB();
+      *(uint64_t*)(Address+0x100000) = data64;
+      __DSB();
+      Address +=8; // 64bit 8byte
+    }
+  }
+
+
   // display_memory(FLASH_USER_START_ADDR_1);
   // display_memory(FLASH_USER_START_ADDR_2);
-  // display_memory((uint32_t)ram_data_rx);
 
-  
 
 ////////////////////////////////
 
@@ -413,23 +468,8 @@ int main(void)
   // while(1);
 }
 
-static void Update_Task(void)
+static void Download_Task(void)
 {
-  
-  FWUPDATE_InitFlash();
-  
-  /* Initialize QuadSPI ------------------------------------------------------ */
-  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
-  {
-    printf("FWUPDATE_InitQSPI error\n");
-    Error_Handler();
-  }
-  
-    // Test clear at startup
-// FWUPDATE_EraseExtFlash(AREA_1);  
-FWUPDATE_EraseExtFlash(AREA_2);
-  
-  FWUPDATE_Init();
   
   /* Create dump program */
   dump_program.size = sizeof(qspi_wr_buf);
@@ -449,24 +489,32 @@ FWUPDATE_EraseExtFlash(AREA_2);
   create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
   
   
-  printf("qspi_wr_buf 0x%08x\n", qspi_wr_buf);
+  
   uint32_t download_byte = 0;
   for(int i = 0; i < 8; i++)
   {
-    uwStart = HAL_GetTick();
+    // uwStart = HAL_GetTick();
     FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]);
-    uwEnd = HAL_GetTick();
+    // uwEnd = HAL_GetTick();
     download_byte += FW_DOWNLOAD_BUFFER_SIZE;
-    (uwEnd - uwStart > 1) ? printf("Downloading: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Downloading: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+    // (uwEnd - uwStart > 1) ? printf("Downloading: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Downloading: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
   }
   
-  display_qspi_memory(0x90200000);
-  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
-  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x10000);
-  display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x20000);
+  // display_qspi_memory(0x90200000);
+  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
+  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x10000);
+  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x20000);
  
   
 }
+
+static void Update_Task(void)
+{
+  FWUPDATE_Update(EXTROM_AREA_2_ADDRESS, 0x08160000, 4096*4);
+}
+
+
+
 
 /**
   * @brief  System Clock Configuration

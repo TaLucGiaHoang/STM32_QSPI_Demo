@@ -240,7 +240,7 @@ enum {
 
 int32_t EXTROM_Init(void);   // Initialize the QSPI flash access module
 int32_t EXTROM_Erase(__IO uint32_t start, uint32_t num_bytes);      // Erase the QSPI flash memory
-int32_t EXTROM_Read(__IO uint32_t src, uint32_t dst, uint32_t num_bytes);    // Read data from QSPI flash memory
+int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes);    // Read data from QSPI flash memory
 int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes);   // Write data to QSPI flash memory
 
 /* Callback functions */

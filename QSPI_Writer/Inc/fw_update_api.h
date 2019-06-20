@@ -29,11 +29,13 @@ typedef enum {
 
 /* QSPI Flash area status definition */
 typedef enum {
-  FWUPDATE_AREA_STATUS_DOWNLOADING = 0, // Writting transferred data from UART to External memory
+  FWUPDATE_AREA_STATUS_ERASED,             // empty area
+  FWUPDATE_AREA_STATUS_DOWNLOADING, // Writting transferred data from UART to External memory
   FWUPDATE_AREA_STATUS_DOWNLOAD_COMPLETE,  // newest version
   FWUPDATE_AREA_STATUS_UPDATING,           // copying from External memory to Internal memory
   FWUPDATE_AREA_STATUS_UPDATE_COMPLETE,    // current running firmware
-  FWUPDATE_AREA_STATUS_ERASED = -1,             // empty area
+  FWUPDATE_AREA_STATUS_BACKUPING,             // 
+  FWUPDATE_AREA_STATUS_BACKUP_COMPLETE,    // 
 };
 
 /* Task message */
@@ -42,10 +44,16 @@ typedef enum {
   FWUPDATE_MSG_QSPI_READ_COMPLETE,
   FWUPDATE_MSG_QSPI_WRITE,           // QSPI write size 4096 bytes
   FWUPDATE_MSG_QSPI_WRITE_COMPLETE,  // QSPI write complete
-  FWUPDATE_MSG_TX_DATA,          // FW data transmission (Packet size: 512 bytes)
-  FWUPDATE_MSG_RX_DATA_COMPLETE,     // FW data reception complete
   FWUPDATE_MSG_QSPI_ERASE,
   FWUPDATE_MSG_QSPI_ERASE_COMPLETE,   // FW area (2MB) erase complete
+  FWUPDATE_MSG_FLASH_ERASE,
+  FWUPDATE_MSG_FLASH_ERASE_COMPLETE,
+  FWUPDATE_MSG_FLASH_READ,
+  FWUPDATE_MSG_FLASH_READ_COMPLETE,
+  FWUPDATE_MSG_FLASH_WRITE,
+  FWUPDATE_MSG_FLASH_WRITE_COMPLETE,
+  FWUPDATE_MSG_TX_DATA,          // FW data transmission (Packet size: 512 bytes)
+  FWUPDATE_MSG_RX_DATA_COMPLETE,     // FW data reception complete  
   FWUPDATE_MSG_UPDATE_REQUEST,
   FWUPDATE_MSG_UPDATE_REQUEST_ACK,    // FW update request ACK
   FWUPDATE_MSG_UPDATE_COMPLETE,
@@ -56,11 +64,15 @@ typedef enum {
   FWUPDATE_MSG_FW_INFO_ACK,       // New FW information ACK
   FWUPDATE_MSG_RESET_REQUEST,
   FWUPDATE_MSG_RESET_REQUEST_ACK,
+  FWUPDATE_MSG_VERIFY_REQUEST,
+  FWUPDATE_MSG_VERIFY_REQUEST_ACK,
+  FWUPDATE_MSG_VERIFY_OK,
+  FWUPDATE_MSG_VERIFY_NOT_OK,
 } FWUPDATE_MSG;
 
 /* Export definitions */
 /* QSPI Write buffer */
-#define FW_DOWNLOAD_BUFFER_SIZE (4096);
+#define FW_DOWNLOAD_BUFFER_SIZE (4096)
 
 /* Firmware structure */
 struct FW_Info_ST {

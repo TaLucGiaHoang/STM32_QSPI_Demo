@@ -135,7 +135,7 @@ uint32_t GetSector(uint32_t Address)
     sector = FLASH_SECTOR_7;
   }
 
-  printf("sector %d\n", sector);
+  // printf("sector %d\n", sector);
   return sector;
 }
 
@@ -212,7 +212,7 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
     return FLASH_ERR_FATAL;
   }
  
-  printf("start 0x%08x to 0x%08x (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
+  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
   HAL_FLASH_Unlock();
   if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
   {
@@ -258,7 +258,7 @@ int32_t FLASH_Erase_1(uint32_t start, uint32_t num_bytes)
   EraseInitStruct.Sector        = FirstSector;
   EraseInitStruct.NbSectors     = NbOfSectors;
   
-  printf("start 0x%08x to 0x%08x (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
+  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
   if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
   {
     /*
@@ -296,7 +296,7 @@ int32_t FLASH_Erase_2(uint32_t start, uint32_t num_bytes)
   EraseInitStruct.Sector        = FirstSector;
   EraseInitStruct.NbSectors     = NbOfSectors;
   
-  printf("start 0x%08x to 0x%08x (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
+  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
   if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
   {
     /*
@@ -347,7 +347,6 @@ int32_t FLASH_Read(uint32_t src, uint32_t dst, uint32_t num_bytes)
     if(count < block_size_max)
     {
       block_size = count;
-      printf("block_size %d count %d\n", block_size, count);
     } else
     {
       block_size = block_size_max;
