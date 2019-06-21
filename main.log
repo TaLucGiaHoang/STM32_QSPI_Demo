@@ -1,11 +1,6 @@
-Erase all QSPI: 0 : 12596 (12596 ms) 
-
-Start Hardware to run v1 ... (not implemented)
-area 0 state -1
-Unregconize, format area 0
-Erase area 0 0x90000000
-area 1 state -1
-Unregconize, format area 1
+[BootLoader] Initialize, check new firmware
+area 0 state 0
+area 1 state 3
 Erase area 1 0x90200000
 Backup firmware version 1 to area 0
 backup_firmware() backup_area 0 set backup completed (not implemeted)
@@ -17,41 +12,18 @@ Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 0
 [QSPI] program: 0x90210000 , size 0x00000000 (0) , version 0
 
-
-Reset Hardware to run v1 ... (not implemented)
-area 0 state 6
-area 1 state 0
-Backup area 0 info:
-[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
-
-Update area 1 info:
-[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 0
-[QSPI] program: 0x90210000 , size 0x00000000 (0) , version 0
-
-
-Reset Hardware to download v2 ... (not implemented)
-area 0 state 6
-area 1 state 0
-Backup area 0 info:
-[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
-
-Update area 1 info:
-[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 0
-[QSPI] program: 0x90210000 , size 0x00000000 (0) , version 0
-
-- Download completed version 2 to QSPI (area 1, address 0x90210000, size 16384 bytes)
-[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
-
+[BootLoader] Normal startup
+[main] Initialze
+New firmware size 132 0x84
+round up program_size 4096 0x1000 
+- Download to QSPI (area 1, address 0x90210000)
+- Download completed version 2 to QSPI (area 1, address 0x90210000, size 4096 bytes)
 - Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
+[Download_Task] OK
 
-Reset Hardware to update v2 ... (not implemented)
+
+Restart for updating...
+[BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 2
 Detected new version 2 in QSPI area 1
@@ -61,86 +33,119 @@ Backup area 0 info:
 
 Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
 
-- Update new firmware version 2 from QSPI 0x90210000 (16384 bytes) to FLASH 0x08160000
-Flash erase [0x08160000:0x08163fff] (0x4000 bytes) Sector3 NbOfSectors1
-- Update completed (16384 bytes)
+[BootLoader] Update
+[BootLoader] new main2 to ROM 0x81e0001
+- Update new firmware version 2 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081d0000
+Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+- Update completed (4096 bytes)
 - Update completed, send reset request... (not implemented)
-
-Reset Hardware to download v3 ... (not implemented)
+[BootLoader] Restart
+[BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 4
 area 1 (version 2) change to state 6 
 Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
 
 Update area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
 [QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
 
+[BootLoader] Normal startup
+[main] Initialze
+New firmware size 132 0x84
+round up program_size 4096 0x1000 
+- Download to QSPI (area 0, address 0x90010000)
 - Erase old backup area 0 (version 1) before downloading
 Erase area 0 0x90000000
-- Download completed version 3 to QSPI (area 0, address 0x90010000, size 16384 bytes)
-[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90010000 , size 0x00004000 (16384) , version 3
+- Download completed version 3 to QSPI (area 0, address 0x90010000, size 4096 bytes)
+- Download completed, send reset request... (not implemented)
+[Download_Task] OK
 
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
-- Download completed, send reset request... (not implemented)
 
-Reset Hardware to update v3 ... (not implemented)
+Restart for updating...
+[BootLoader] Initialize, check new firmware
 area 0 state 2
 Detected new version 3 in QSPI area 0
 area 1 state 6
 Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
 
 Update area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90010000 , size 0x00004000 (16384) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
 
-- Update new firmware version 3 from QSPI 0x90010000 (16384 bytes) to FLASH 0x08160000
-Flash erase [0x08160000:0x08163fff] (0x4000 bytes) Sector3 NbOfSectors1
-- Update completed (16384 bytes)
+[BootLoader] Update
+[BootLoader] new main2 to ROM 0x81e0001
+- Update new firmware version 3 from QSPI 0x90010000 (4096 bytes) to FLASH 0x081d0000
+Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+- Update completed (4096 bytes)
 - Update completed, send reset request... (not implemented)
-
-Reset Hardware to run v3... (not implemented)
+[BootLoader] Restart
+[BootLoader] Initialize, check new firmware
 area 0 state 4
 area 0 (version 3) change to state 6 
 area 1 state 6
 Backup area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00004000 (16384) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
 
 Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
+
+[BootLoader] Normal startup
+[main] Initialze
+New firmware size 132 0x84
+round up program_size 4096 0x1000 
+- Download to QSPI (area 1, address 0x90210000)
+- Erase old backup area 1 (version 2) before downloading
+Erase area 1 0x90200000
+- Download completed version 4 to QSPI (area 1, address 0x90210000, size 4096 bytes)
+- Download completed, send reset request... (not implemented)
+[Download_Task] OK
 
 
-Reset Hardware to run v3... (not implemented)
+Restart for updating...
+[BootLoader] Initialize, check new firmware
 area 0 state 6
-area 1 state 6
+area 1 state 2
+Detected new version 4 in QSPI area 1
 Backup area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00004000 (16384) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
 
 Update area 1 info:
-[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 4
 
-
-Reset Hardware to run v3... (not implemented)
+[BootLoader] Update
+[BootLoader] new main2 to ROM 0x81e0001
+- Update new firmware version 4 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081d0000
+Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+- Update completed (4096 bytes)
+- Update completed, send reset request... (not implemented)
+[BootLoader] Restart
+[BootLoader] Initialize, check new firmware
 area 0 state 6
-area 1 state 6
-Backup area 0 info:
-[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00004000 (16384) , version 3
-
-Update area 1 info:
+area 1 state 4
+area 1 (version 4) change to state 6 
+Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00004000 (16384) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 4
 
+Update area 0 info:
+[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
+
+[BootLoader] Normal startup
+[main] Initialze
+New firmware size 132 0x84
+round up program_size 4096 0x1000 
+- Download to QSPI (area 0, address 0x90010000)
+- Erase old backup area 0 (version 3) before downloading
+Erase area 0 0x90000000

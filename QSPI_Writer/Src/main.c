@@ -86,8 +86,10 @@
 #define FLASH_USER_START_ADDR_2   ADDR_FLASH_SECTOR_0_BANK2
 #define FLASH_USER_END_ADDR_2     0x081FFFFF // ADDR_FLASH_SECTOR_7_BANK2 //(0x081FFFFF)  /* End @ of user Flash area Bank2*/
 /* Private macro -------------------------------------------------------------*/
-// #pragma section =".qspi"
+#pragma section =".qspi"
 // #pragma section =".qspi_init"
+#pragma section =".boot_loader"
+#pragma section =".main"
 
 /* Private variables ---------------------------------------------------------*/
 QSPI_HandleTypeDef QSPIHandle;
@@ -114,26 +116,20 @@ uint64_t FlashWord[4] = { 0x0102030405060708,  // 8 bytes
                         };
 
 /*Variable used for Erase procedure*/
-static FLASH_EraseInitTypeDef EraseInitStruct;
-
 
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
-static void Error_Handler(void);
+static inline void Error_Handler(void);
 static void CPU_CACHE_Enable(void);
 
-
-static inline void Flash_Measure_Erase(void);
-static inline void Flash_Measure_Write(void);
-static inline void Flash_Measure_Read(void);
 static void Download_Task(void);
 static void Update_Task(void);
-
+static void boot_loader_update(void);
 static inline void display_memory(uint32_t address);
 static inline void display_qspi_memory(uint32_t address);
 static inline void create_write_data(uint8_t* buf, uint32_t buf_size, uint8_t* str, uint32_t str_len);
-
+static void main2(void);
 
 static void BlinkLed(void);
 
@@ -152,9 +148,19 @@ static struct Program_ST {
   */
 int main(void)
 {
-  volatile uint32_t uwStart, uwEnd;
-  QSPI_CommandTypeDef      sCommand;
   
+  boot_loader_update();
+
+  main2();
+
+  /* Reset system */
+  Reset_Handler();
+}
+
+// #pragma section =".boot_loader"
+void boot_loader_update(void)
+{
+   
   /* Enable the CPU Cache */
   CPU_CACHE_Enable();
 	
@@ -171,15 +177,14 @@ int main(void)
   HAL_Init();
 
   /* Configure the system clock to 400 MHz */
-  // SystemClock_Config();
+  /* SystemClock_Config(); */
  
   BSP_LED_Init(LED1);
-  BSP_LED_Init(LED3);
-  BSP_LED_Init(LED2);
-  BSP_LED_On(LED2);
+  // BSP_LED_Init(LED2);
+  // BSP_LED_Init(LED3);
   
-  
-    FWUPDATE_InitFlash();
+  printf("[BootLoader] Initialize, check new firmware\n");
+  FWUPDATE_InitFlash();
   
   /* Initialize QuadSPI ------------------------------------------------------ */
   if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
@@ -188,52 +193,197 @@ int main(void)
     Error_Handler();
   }
   
-  // /* Test clear at startup */
-// FWUPDATE_EraseExtFlash(AREA_1);  
-// FWUPDATE_EraseExtFlash(AREA_2);
-    // __IO uint32_t qspi_addr = 0x90000000;  
-  /* Erase 2MB of QSPI Flash - Area 1+2*/  
-  uwStart = HAL_GetTick();
-  if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, 2*EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
+  FWUPDATE_Init();
+  
+  if(FWUPDATE_IsNewOS() == 1)
   {
-    printf("EXTROM_Erase 1 error\n");
+    void (*fp)(void) = &main2;
+    // uint32_t rom_addr = (uint32_t)fp;
+    
+    uint32_t rom_addr = 0x081D0000; // 0x08160000; // Example Sector 3 Bank 1
+    
+    // flash_addr = (uint8_t *)(__section_begin(".qspi_init"));
+    
+    printf("[BootLoader] Update\n");
+    printf("[BootLoader] new main2 to ROM 0x%p\n", fp);
+    BSP_LED_On(LED1);
+    FWUPDATE_Update(0, rom_addr, 0);  // test update new firmware to 0x08160000
+    HAL_Delay(1000);
+    LED2_GPIO_PORT->ODR ^= LED1_PIN;
+    
+    /* Reset system */
+    printf("[BootLoader] Restart\n");
+    Reset_Handler();
+  } else
+  {
+    printf("[BootLoader] Normal startup\n");
+  }
+
+}
+
+uint8_t downldata[FW_DOWNLOAD_BUFFER_SIZE*4 + 500];
+static void Download_Task(void)
+{
+  int ret = 0;
+  // uint32_t program_size = FW_DOWNLOAD_BUFFER_SIZE*4 + 500;;
+  const uint32_t qspi_buf_size = FW_DOWNLOAD_BUFFER_SIZE;
+  
+  
+  // /* Receive data from uart */
+  // /* Write to QSPI write buffer */
+
+  // create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
+  
+  
+  uint32_t program_size = __section_size(".main");
+  // uint32_t program_addr = (uint32_t)downldata;
+  uint32_t program_addr = (uint32_t)(__section_begin(".main")); // examples 0x081e0001
+  printf("New firmware size %d 0x%x\n", program_size, program_size);
+  uint32_t count = program_size;
+
+  
+   // printf("program_size %d 0x%x \n", program_size, program_size);
+  if(program_size%qspi_buf_size)
+  {
+    program_size = (program_size/qspi_buf_size)*qspi_buf_size + (((program_size%qspi_buf_size + qspi_buf_size-1)/qspi_buf_size)*qspi_buf_size);
+printf("round up program_size %d 0x%x \n", program_size, program_size);
+  }
+  
+ 
+  
+  FWUPDATE_Download_Config(program_size, qspi_buf_size);
+
+  do
+  // for(int i = 0; i<6; i++)
+  {
+    if(count < qspi_buf_size)
+    {
+      memset(qspi_wr_buf, 0xff, qspi_buf_size); // clearn buffer
+      memcpy(qspi_wr_buf, (void*)program_addr, count);
+    } else 
+    {
+      ;
+    }
+    
+    ret = FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]); // Write 4096 bytes to QSPI
+    
+    program_addr  += qspi_buf_size;
+    count -= qspi_buf_size;
+    
+    if(ret == FWUPDATE_ERR_OK)
+    {
+      printf("[Download_Task] OK\n");
+      break;
+    } else if(ret == FWUPDATE_ERR_BUSY)
+    {
+      printf("[Download_Task] busy\n");
+    } else
+    {
+      printf("[Download_Task] Error %d\n", ret);
+      if(ret == FWUPDATE_ERR_NOT_INITIALIZED) printf("[Download_Task] FWUPDATE_ERR_NOT_INITIALIZED\n", ret);
+      if(ret == FWUPDATE_ERR_PARAM) printf("[Download_Task] FWUPDATE_ERR_PARAM\n", ret);
+      if(ret == FWUPDATE_ERR_FATAL) printf("[Download_Task] FWUPDATE_ERR_FATAL\n", ret);
+      BSP_LED_On(LED3);
+      while(1);
+    }
+  } while(count > 0);
+  
+  // display_qspi_memory(0x90200000);
+  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
+
+}
+
+static void Update_Task(void)
+{
+  FWUPDATE_Update(EXTROM_AREA_2_ADDRESS, 0x08160000, 4096*4);
+}
+
+
+static void main2(void) @ ".main"
+{
+  
+  /* Enable the CPU Cache */
+  CPU_CACHE_Enable();
+  /* STM32H7xx HAL library initialization:
+
+       - Systick timer is configured by default as source of time base, but user 
+         can eventually implement his proper time base source (a general purpose 
+         timer for example or other time source), keeping in mind that Time base 
+         duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
+         handled in milliseconds basis.
+       - Set NVIC Group Priority to 4
+       - Low Level Initialization
+     */
+  HAL_Init();
+
+  /* Configure the system clock to 400 MHz */
+  /* SystemClock_Config(); */
+ 
+  BSP_LED_Init(LED1);
+  BSP_LED_Init(LED3);
+  BSP_LED_Init(LED2);
+  // BSP_LED_On(LED2);
+  
+  printf("[main] Initialze\n");
+  FWUPDATE_InitFlash();
+  
+  /* Initialize QuadSPI ------------------------------------------------------ */
+  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
+  {
+    printf("FWUPDATE_InitQSPI error\n");
     Error_Handler();
   }
-  uwEnd = HAL_GetTick();
   
-  (uwEnd - uwStart > 1) ? printf("Erase all QSPI: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erase all QSPI: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+  // FWUPDATE_Init();
 
+  // /* Erase 2MB of QSPI Flash - Area 1+2*/  
+  // uwStart = HAL_GetTick();
+  // if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, 2*EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
+  // {
+    // printf("EXTROM_Erase 1 error\n");
+    // Error_Handler();
+  // }
+  // uwEnd = HAL_GetTick();
   
-  printf("\nStart Hardware to run v1 ... (not implemented)\n");
-  FWUPDATE_Init();
-  printf("\nReset Hardware to run v1 ... (not implemented)\n");
-  FWUPDATE_Init();
-  printf("\nReset Hardware to download v2 ... (not implemented)\n");
-  FWUPDATE_Init();
+  // (uwEnd - uwStart > 1) ? printf("Erase all QSPI: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Erase all QSPI: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
+
+  // printf("\nStart Hardware to backup v1 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // printf("\nReset Hardware to run v1 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // printf("\nReset Hardware to download v2 ... (not implemented)\n");
+  // FWUPDATE_Init();
   Download_Task(); // v2
-  printf("\nReset Hardware to update v2 ... (not implemented)\n");
-  FWUPDATE_Init();
-  Update_Task();  // v2 
-  printf("\nReset Hardware to download v3 ... (not implemented)\n");
-  FWUPDATE_Init();
-  Download_Task(); // v3
-  printf("\nReset Hardware to update v3 ... (not implemented)\n");
-  FWUPDATE_Init();
-  Update_Task();   // v3
-  printf("\nReset Hardware to run v3... (not implemented)\n");
-  FWUPDATE_Init();
-  printf("\nReset Hardware to run v3... (not implemented)\n");
-  FWUPDATE_Init();
-  printf("\nReset Hardware to run v3... (not implemented)\n");
-  FWUPDATE_Init();
+  // printf("\nReset Hardware to update v2 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Update_Task();  // v2 
+  // printf("\nReset Hardware to download v3 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Download_Task(); // v3
+  // printf("\nReset Hardware to update v3 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Update_Task();   // v3
+  // printf("\nReset Hardware to download v4 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Download_Task(); // v4
+  // printf("\nReset Hardware to update v4 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Update_Task();   // v4
+  // printf("\nReset Hardware to download v5 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Download_Task(); // v5
+  // printf("\nReset Hardware to update v5 ... (not implemented)\n");
+  // FWUPDATE_Init();
+  // Update_Task();   // v5
+  // printf("\nReset Hardware to run v5... (not implemented)\n");
+  // FWUPDATE_Init();
+  // printf("\nReset Hardware to run v5... (not implemented)\n");
+  // FWUPDATE_Init();
+  // printf("\nReset Hardware to run v5... (not implemented)\n");
+  // FWUPDATE_Init();
 
-  // /* Create write data buffer */
-  // memset(ram_data, 'x', sizeof(ram_data));
-  // create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
 
-  // memset(qspi_wr_buf, '&', sizeof(qspi_wr_buf));
-  // create_write_data(uart_rx_buf, sizeof(uart_rx_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
-  
+
 
   // __IO uint32_t qspi_addr = 0x90000000;  
   // /* Erase 2MB of QSPI Flash - Area 1+2*/  
@@ -330,20 +480,6 @@ int main(void)
   // }
   // uwEnd = HAL_GetTick();
   // (uwEnd - uwStart > 1) ? printf("Reading Sequence 2: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Reading Sequence 2: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
-  
-
-// display_qspi_memory(0x90210000);
-
-  // printf("ram_data 0x%08x\n", ram_data);
-  // printf("ram_data_rx 0x%08x\n", ram_data_rx);
-  // printf("uart_rx_buf 0x%08x\n", uart_rx_buf);
-  // printf("qspi_wr_buf 0x%08x\n", qspi_wr_buf);
-  
-  // create_write_data(ram_data, sizeof(ram_data), "0123456789ABCDEFGHIKLMNOPQRSTUVW+-*/abcdefghiklmnopqrstuvw!@#$%^", 64);
-  
-  
-  
-  
   
   
 ////////////////////////////
@@ -442,79 +578,31 @@ int main(void)
   // }
   // (MemoryProgramStatus == 0) ? printf("OK\n") : printf("%d errors\n", MemoryProgramStatus);
 
-  Address = (uint32_t)ADDR_FLASH_SECTOR_0_BANK1; 
-  while (Address < ((uint32_t)0x08100000))
-  {
-    for(Index = 0; Index<4; Index++)
-    {
-      data64 = *(uint64_t*)Address;
-      __DSB();
-      *(uint64_t*)(Address+0x100000) = data64;
-      __DSB();
-      Address +=8; // 64bit 8byte
-    }
-  }
-
-
-  // display_memory(FLASH_USER_START_ADDR_1);
-  // display_memory(FLASH_USER_START_ADDR_2);
+  // Address = (uint32_t)ADDR_FLASH_SECTOR_0_BANK1; 
+  // while (Address < ((uint32_t)0x08100000))
+  // {
+    // for(Index = 0; Index<4; Index++)
+    // {
+      // data64 = *(uint64_t*)Address;
+      // __DSB();
+      // *(uint64_t*)(Address+0x100000) = data64;
+      // __DSB();
+      // Address +=8; // 64bit 8byte
+    // }
+  // }
 
 
 ////////////////////////////////
-
-  
+  // printf("Blink LED\n");
   // /* Execute the code from QSPI memory ------------------------------- */
-  BlinkLed();
+  // BlinkLed();
+
   // while(1);
-}
-
-static void Download_Task(void)
-{
   
-  /* Create dump program */
-  dump_program.size = sizeof(qspi_wr_buf);
-  dump_program.data = (__IO uint32_t*)qspi_wr_buf;
-  
-
-
-  
-  FWUPDATE_Download_Config(4096*4, 4096);
-  
-  /* Receive data from uart */
-  memset(qspi_wr_buf, 0x22, sizeof(qspi_wr_buf));
-  // for(int i = 0; i < 4096; i += 1024)
-  // {
-    // memcpy((void*)&qspi_wr_buf[i], uart_rx_buf, 1024);
-  // }
-  create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
-  
-  
-  
-  uint32_t download_byte = 0;
-  for(int i = 0; i < 8; i++)
-  {
-    // uwStart = HAL_GetTick();
-    FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]);
-    // uwEnd = HAL_GetTick();
-    download_byte += FW_DOWNLOAD_BUFFER_SIZE;
-    // (uwEnd - uwStart > 1) ? printf("Downloading: %ld : %ld (%ld ms) \n", uwStart, uwEnd, uwEnd - uwStart) : printf("Downloading: %ld : %ld ( < 1 ms) \n", uwStart, uwEnd);
-  }
-  
-  // display_qspi_memory(0x90200000);
-  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
-  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x10000);
-  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x20000);
- 
+  printf("\n\nRestart for updating...\n");
+  HAL_Delay(10000);
   
 }
-
-static void Update_Task(void)
-{
-  FWUPDATE_Update(EXTROM_AREA_2_ADDRESS, 0x08160000, 4096*4);
-}
-
-
-
 
 /**
   * @brief  System Clock Configuration
@@ -596,28 +684,6 @@ static void SystemClock_Config(void)
 
 
 
-///////////////////////////////////
-// Internal Flash (2MB)
-///////////////////////////////////
-static void Flash_Measure_Erase(void)
-{
-	
-}
-
-static inline void Flash_Measure_Write(void)
-{
-  /* Write data in Flash */
-  /* Create write data buffer */
-  uint8_t* p = (uint8_t*)ROM_START_ADDRESS;
-  //0x1B0000
-  for(int i = 0; i < 10; i++)
-  {
-    memcpy(p, "0123456789ABCDEFGHIKLMNOPQRSTUVW", 32);
-    p += 32;
-  }
-  
-}
-
 static void display_qspi_memory(uint32_t address)
 {
   uint8_t qspi_buf[256];
@@ -645,11 +711,6 @@ static void display_qspi_memory(uint32_t address)
   printf("\n");
 }
 
-static inline void Flash_Measure_Read(void)
-{
-  /* Read data in Flash */
-  display_memory(ROM_START_ADDRESS);
-}
 
 static inline void create_write_data(uint8_t* buf, uint32_t buf_size, uint8_t* str, uint32_t str_len)
 {
@@ -679,7 +740,7 @@ static inline void display_memory(uint32_t address)
   * @param  None
   * @retval None
   */
-static void Error_Handler(void)
+static inline void Error_Handler(void)
 {
   BSP_LED_On(LED3);
 
@@ -729,7 +790,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   * @param  None
   * @retval None
   */
-static void BlinkLed(void)// @ ".qspi"
+static void BlinkLed(void) // @ ".qspi"
 {
   volatile uint32_t i;
   while (1) {

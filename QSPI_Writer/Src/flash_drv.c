@@ -24,19 +24,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 static FLASH_EraseInitTypeDef EraseInitStruct;
-// FLASH_EraseProgram
-// static uint32_t Address = 0, SECTORError = 0, Index = 0;
-// static __IO uint32_t MemoryProgramStatus = 0;
-// static __IO uint64_t data64 = 0;
 
-// static uint64_t FlashWord[4] = { 0x0102030405060708,
-                          // 0x1112131415161718,
-                          // 0x2122232425262728,    
-                          // 0x3132333435363738
-                        // };
-
-
-static uint32_t uwStart, uwEnd;
 
 /* Private function prototypes -----------------------------------------------*/
 // static void Flash_Print_Error(void);

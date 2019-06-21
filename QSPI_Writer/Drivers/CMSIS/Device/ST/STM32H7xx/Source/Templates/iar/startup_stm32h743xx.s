@@ -63,6 +63,7 @@
         EXTERN  __iar_program_start
         EXTERN  SystemInit
         PUBLIC  __vector_table
+        
 
         DATA
 __vector_table

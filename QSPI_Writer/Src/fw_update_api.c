@@ -15,19 +15,13 @@
 
 // static FWUPDATE_CALLBACK s_callback = NULL;
 /* Private variables */
-static __IO uint32_t backup_addr = EXTROM_AREA_1_ADDRESS + FW_INFO_SIZE;
-static __IO uint32_t download_addr = EXTROM_AREA_2_ADDRESS + FW_INFO_SIZE;
-static __IO uint32_t update_addr = EXTROM_AREA_2_ADDRESS;
 static __IO uint32_t flash_main_address = ADDR_FLASH_SECTOR_0_BANK2; // test BANK 2
 static struct FW_Info_ST FW[2]; /* [NUM_AREA]; */
 static struct FW_Info_ST fw_info;
 static uint8_t qspi_buf[FW_DOWNLOAD_BUFFER_SIZE];
 
 /* Status flags:  1 done, 0 on process */
-static uint8_t backup_done = 1; 
-static uint8_t update_done = 0;
-static uint8_t download_done = 1;
-static uint32_t backup_area, download_area, update_area;
+static uint32_t backup_area, update_area;
 static uint32_t latest_version;
 static uint32_t total_size = 0, qspi_size_max = 0;
 
@@ -46,7 +40,9 @@ static void display_qspi_memory(uint32_t address);
 
 
 
-
+/* Exported variables */
+/* 0: Nothing , 1: Detect new version */
+uint32_t new_version_flag = 0;
 
 
 
@@ -74,12 +70,6 @@ static void display_qspi_memory(uint32_t address)
     address += 16;
   }
   printf("\n");
-}
-
-static void foo(void)
-{
-
-  
 }
 
 static inline uint32_t calc_backup_area(void)
@@ -154,7 +144,7 @@ static void set_fw_info(uint32_t area, const struct FW_Info_ST* fwp)
 
 static void print_fw_info(struct FW_Info_ST* fwp)
 {
-  uint32_t used_size = fwp->program_size + sizeof(struct FW_Info_ST);
+  // uint32_t used_size = fwp->program_size + sizeof(struct FW_Info_ST);
 
   printf("[QSPI] area: 0x%08x , size 0x%08x (%d), state: %d\n", fwp->area_start_addr, fwp->area_size, fwp->area_size, fwp->state);
   printf("[QSPI] program: 0x%08x , size 0x%08x (%d) , version %d\n", fwp->program_start_addr, fwp->program_size, fwp->program_size, fwp->version);
@@ -251,7 +241,7 @@ static int32_t backup_firmware(void)
 
 static int32_t save_new_firmware(uint32_t area)
 {
-  
+  return 0;
 }
 
 
@@ -315,11 +305,10 @@ FWUPDATE_ERR_CODE FWUPDATE_Init(void)
   // backup_done = 1; 
   // update_done = 0;
   // download_done = 1;
+
+  new_version_flag = 0;  // Initialize 
   
-  backup_addr = EXTROM_AREA_1_ADDRESS;
-  update_addr = EXTROM_AREA_2_ADDRESS;
-  download_addr = EXTROM_AREA_2_ADDRESS;
-  
+  latest_version = 0;
   total_size = 0;
   qspi_size_max = FW_DOWNLOAD_BUFFER_SIZE; // 4096 bytes
 
@@ -328,8 +317,6 @@ FWUPDATE_ERR_CODE FWUPDATE_Init(void)
   /* Check all area state */
   for(int32_t area = AREA_1; area < AREA_NUM; area++) 
   {
-    uint32_t state;
-
     struct FW_Info_ST* fwp = &FW[area];
     get_fw_info(area, fwp);
     
@@ -351,6 +338,7 @@ FWUPDATE_ERR_CODE FWUPDATE_Init(void)
         /* Set flag to copy new firmware to ROM */
         printf("Detected new version %d in QSPI area %d\n", fwp->version, area);
         
+        new_version_flag = 1;  
         update_area = area;
         backup_area = calc_backup_area();
         break;
@@ -391,15 +379,10 @@ FWUPDATE_ERR_CODE FWUPDATE_Init(void)
       }
     }
     
-
-    // /* Set update area is the area which has the highest version */
-    // if(fwp->version >= FW[update_area].version)
-    // {
-      // update_area = area;
-      // backup_area = calc_backup_area();
-    // }
-
-
+    if(latest_version < fwp->version)
+    {
+      latest_version = fwp->version;
+    }
   } 
   
 
@@ -440,6 +423,12 @@ FWUPDATE_ERR_CODE FWUPDATE_Init(void)
   // print_fw_info(&FW[AREA_2]);
   return FWUPDATE_ERR_OK;
 }
+
+uint32_t FWUPDATE_IsNewOS(void)
+{
+  return new_version_flag;
+}
+
 
 
 FWUPDATE_ERR_CODE FWUPDATE_Download_Config(uint32_t firmware_size, uint32_t qspi_wr_size)
@@ -487,37 +476,40 @@ FWUPDATE_ERR_CODE FWUPDATE_Download_Config(uint32_t firmware_size, uint32_t qspi
   *         FWUPDATE_ERR_PARAM  Illegal parameter
   *         FWUPDATE_ERR_FATAL  Other error
   */
-
 FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
 {
   int32_t ret;
   __IO uint32_t data_addr = (__IO uint32_t)src;
+  __IO uint32_t download_addr;
   const uint32_t size = qspi_size_max;
   struct FW_Info_ST* fwp = &fw_info;
   uint32_t used_size = 0;
-  
+
   /* Check parameters */
-  
+  /* Check total size will be download */
+  if(total_size == 0)
+  {
+    printf("Not initialize variable: total_size = %d\n", total_size); // test
+    return FWUPDATE_ERR_NOT_INITIALIZED;
+  }
+    
+    
   /* Read from QSPI area header */
 	get_fw_info(update_area, fwp);
+  printf("- Download to QSPI (area %d, address 0x%08x)\n", update_area, fwp->program_start_addr);
   
   if(fwp->state == FWUPDATE_AREA_STATUS_BACKUP_COMPLETE)
   {
     /* Erase old backup area before downloading */
     printf("- Erase old backup area %d (version %d) before downloading\n", update_area, fwp->version);
     ext_flash_erase(update_area);
+    
+    /* Read area header after erasing */
+    get_fw_info(update_area, fwp);
   }
   
   if(fwp->state == FWUPDATE_AREA_STATUS_ERASED)
   {
-    /* Check total size will be download */
-    if(total_size == 0)
-    {
-      printf("Not initialize variable: total_size = %d\n", total_size); // test
-      ret = FWUPDATE_ERR_NOT_INITIALIZED;
-      return ret;
-    }
-    
     /* Set program size to 0 */
     fwp->program_size = 0;
 
@@ -528,29 +520,25 @@ FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
     set_fw_info(update_area, fwp);
   }
   
-  // /* Save new firmware to External QSPI Flash */
+  /* Save new firmware to External QSPI Flash */
   if(fwp->state == FWUPDATE_AREA_STATUS_DOWNLOADING)
   {
     /* Check space for download */
     used_size = FW_INFO_SIZE + fwp->program_size + size;
     if(used_size > EXTROM_AREA_SIZE_2MB)
     {
-      printf("Error out of memory");  //////// test
-      ret = FWUPDATE_ERR_FATAL;
-      return ret;
+      printf("- Error out of memory");  //////// test
+      return FWUPDATE_ERR_FATAL;
     }
     
     /* Set download address */
     download_addr = fwp->program_start_addr + fwp->program_size;
-    
-	
-    // printf("- download_addr 0x%08x , data_addr 0x%08x(%d bytes)\n", download_addr, data_addr, size);
-    
+        
     /* Write 4096 bytes each calling */
     if(EXTROM_Write(data_addr, download_addr, size) != FLASH_ERR_OK)
     {
-      ret = FWUPDATE_ERR_FATAL;
-      printf("Downloading EXTROM_Write error\n");
+      printf("- EXTROM_Write error\n");
+      return FWUPDATE_ERR_FATAL;
     }
 
     /* Increase program size of QSPI Flash */
@@ -565,12 +553,11 @@ FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
       latest_version += 1;
       fwp->version = latest_version;
       printf("- Download completed version %d to QSPI (area %d, address 0x%08x, size %d bytes)\n", fwp->version, update_area, fwp->program_start_addr, fwp->program_size);
-      print_fw_info(fwp);  // TEST
+      // print_fw_info(fwp);  // TEST
     } else if(fwp->program_size > total_size)
     {
-      printf("- Error Download oversize %d\n", fwp->program_size); // test
-      ret = FWUPDATE_ERR_FATAL;
-      return ret;
+      printf("- Error Download oversize %d > %d\n", fwp->program_size, total_size); // test
+      return FWUPDATE_ERR_FATAL;
     } else
     {
       fwp->state = FWUPDATE_AREA_STATUS_DOWNLOADING; // keep downloading
@@ -578,7 +565,6 @@ FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
     
     /* Write to QSPI area header */
     set_fw_info(update_area, fwp);
-    
     ret = FWUPDATE_ERR_BUSY;
   }
   
@@ -588,7 +574,8 @@ FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
     printf("- Download completed, send reset request... (not implemented)\n");
     ret = FWUPDATE_ERR_OK;
   }
-  return FWUPDATE_ERR_OK; // test
+  
+  return ret;
 }
 
 
@@ -619,19 +606,27 @@ FWUPDATE_ERR_CODE FWUPDATE_Update(uint32_t src, uint32_t dst, uint32_t num_bytes
   
   /* Check flag */
   /* Check parameters */
-  if((src < EXTROM_AREA_1_ADDRESS) || (src >= EXTROM_AREA_2_ADDRESS + EXTROM_AREA_SIZE_2MB))
-  {
-    return FWUPDATE_ERR_PARAM;
-  }
+  // if((src < EXTROM_AREA_1_ADDRESS) || (src >= EXTROM_AREA_2_ADDRESS + EXTROM_AREA_SIZE_2MB))
+  // {
+    // return FWUPDATE_ERR_PARAM;
+  // }
   
-  if( !(IS_FLASH_PROGRAM_ADDRESS(dst)) || !(IS_FLASH_PROGRAM_ADDRESS(dst + num_bytes -1)) )
-  {
-    return FWUPDATE_ERR_PARAM;
-  }
+  // if( !(IS_FLASH_PROGRAM_ADDRESS(dst)) || !(IS_FLASH_PROGRAM_ADDRESS(dst + num_bytes -1)) )
+  // {
+    // return FWUPDATE_ERR_PARAM;
+  // }
+
 
   /* Read from QSPI Flash */
   /* Read from QSPI area header */
 	get_fw_info(update_area, fwp);
+  
+  
+  /* Check ROM space */
+  if( !(IS_FLASH_PROGRAM_ADDRESS(rom_addr)) || !(IS_FLASH_PROGRAM_ADDRESS(rom_addr + fwp->program_size -1)) )
+  {
+    return FWUPDATE_ERR_PARAM;
+  }
   
   /* Check QSPI area state */
   if(fwp->state == FWUPDATE_AREA_STATUS_DOWNLOADING || fwp->state == FWUPDATE_AREA_STATUS_ERASED)
@@ -653,13 +648,13 @@ FWUPDATE_ERR_CODE FWUPDATE_Update(uint32_t src, uint32_t dst, uint32_t num_bytes
     printf("- Update new firmware version %d from QSPI 0x%08x (%d bytes) to FLASH 0x%08x\n", fwp->version, fwp->program_start_addr, fwp->program_size, rom_addr); 
     // printf("qspi_buf 0x%08x\n", (uint32_t)&qspi_buf[0]);
     /* Erase Internal Flash */
-    if(FLASH_Erase(rom_addr, num_bytes) == FLASH_ERR_FATAL)
+    if(FLASH_Erase(rom_addr, fwp->program_size) == FLASH_ERR_FATAL)
     {
       Flash_Print_Error();
       return FWUPDATE_ERR_PARAM;
     }
     
-    count = num_bytes;
+    count = fwp->program_size;
     do
     { 
       if(count < block_size_max)
@@ -674,6 +669,9 @@ FWUPDATE_ERR_CODE FWUPDATE_Update(uint32_t src, uint32_t dst, uint32_t num_bytes
       if((qspi_addr >= EXTROM_AREA_1_ADDRESS) && (qspi_addr < EXTROM_AREA_2_ADDRESS + EXTROM_AREA_SIZE_2MB))
       {
         EXTROM_Read(qspi_addr, (uint32_t)&qspi_buf[0], sizeof(qspi_buf));
+      } else 
+      {
+        return FWUPDATE_ERR_PARAM;
       }
       
       /* Write to Internal Flash */
@@ -712,6 +710,7 @@ FWUPDATE_ERR_CODE FWUPDATE_Update(uint32_t src, uint32_t dst, uint32_t num_bytes
   if(fwp->state == FWUPDATE_AREA_STATUS_UPDATE_COMPLETE)
   {
     printf("- Update completed, send reset request... (not implemented)\n");
+    new_version_flag = 0;
     return FWUPDATE_ERR_OK;
   }
 

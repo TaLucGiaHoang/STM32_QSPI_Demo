@@ -138,6 +138,8 @@
   * @{
   */
 
+  
+  
 /**
   * @brief  Setup the microcontroller system
   *         Initialize the FPU setting, vector table location and External memory 
@@ -212,6 +214,7 @@ void SystemInit (void)
 #else
   SCB->VTOR = FLASH_BANK1_BASE | VECT_TAB_OFFSET;       /* Vector Table Relocation in Internal FLASH */
 #endif  
+
 
 
 }

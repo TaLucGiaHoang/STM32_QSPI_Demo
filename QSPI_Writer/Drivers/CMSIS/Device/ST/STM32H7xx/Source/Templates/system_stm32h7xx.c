@@ -556,7 +556,7 @@ void SystemInit_ExtMemCtl(void)
   /*FMC controller Enable*/
   FMC_Bank1->BTCR[0]  |= 0x80000000;
 
-
+  
 #endif /* DATA_IN_ExtSRAM */
 }
 #endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
