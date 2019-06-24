@@ -1,151 +1,284 @@
 [BootLoader] Initialize, check new firmware
-area 0 state 0
-area 1 state 3
-Erase area 1 0x90200000
-Backup firmware version 1 to area 0
-backup_firmware() backup_area 0 set backup completed (not implemeted)
-Backup area 0 info:
-[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
-
-Update area 1 info:
-[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 0
-[QSPI] program: 0x90210000 , size 0x00000000 (0) , version 0
-
-[BootLoader] Normal startup
-[main] Initialze
-New firmware size 132 0x84
-round up program_size 4096 0x1000 
-- Download to QSPI (area 1, address 0x90210000)
-- Download completed version 2 to QSPI (area 1, address 0x90210000, size 4096 bytes)
-- Download completed, send reset request... (not implemented)
-[Download_Task] OK
-
-
-Restart for updating...
-[BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 2
-Detected new version 2 in QSPI area 1
+Detected new version 42 in QSPI area 1
 Backup area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 41
 
 Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 42
 
 [BootLoader] Update
-[BootLoader] new main2 to ROM 0x81e0001
-- Update new firmware version 2 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081d0000
-Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+[BootLoader] new main2 to ROM 0x081e0000
+- Update new firmware version 42 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081e0000
+Flash erase [0x081e0000:0x081e0fff] (0x1000 bytes) Sector7 NbOfSectors1
 - Update completed (4096 bytes)
 - Update completed, send reset request... (not implemented)
 [BootLoader] Restart
 [BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 4
-area 1 (version 2) change to state 6 
+area 1 (version 42) change to state 6 
 Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 42
 
 Update area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00000000 (0) , version 1
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 41
 
 [BootLoader] Normal startup
+Jump to main2
 [main] Initialze
-New firmware size 132 0x84
-round up program_size 4096 0x1000 
+[Download_Task] New firmware address 0x081e0000, size 136 0x88
 - Download to QSPI (area 0, address 0x90010000)
-- Erase old backup area 0 (version 1) before downloading
+- Erase old backup area 0 (version 41) before downloading
 Erase area 0 0x90000000
-- Download completed version 3 to QSPI (area 0, address 0x90010000, size 4096 bytes)
+- Download completed version 43 to QSPI (area 0, address 0x90010000, size 4096 bytes)
 - Download completed, send reset request... (not implemented)
+
+0.[90010000] 80b524f6 c0fb24f6 6dfc0020 23f622f9    €µ$ö Àû$ö mü1.[90010010] 022023f6 1ff90120 23f61cf9 0ea023f6     #ö ù  #öù  #ö
+2.[90010020] 05f923f6 4afa23f6 4cfa30b1 094823f6    ù#ö Jú#ö Lú0± 	H#ö
+3.[90010030] fdf80220 23f636f9 fee724f6 43fb00bf    ýø  #ö6ù þç$ö Cû4.[90010040] 0aa023f6 f3f841f2 8830bde8 024024f6    
+ #ö óøAò ˆ0½è @$ö
+5.[90010050] 59bc0000 30480008 5b6d6169 6e5d2049    Y¼6.[90010060] 6e697469 616c7a65 0a000000 0a0a5265    niti alze 
+
+Re
+7.[90010070] 73746172 7420666f 72207570 64617469    star t fo r up dati
+8.[90010080] 6e672e2e 2e0a0000 ffffffff ffffffff    ng.. .
+9.[90010090] ffffffff ffffffff ffffffff ffffffff    ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ
+
 [Download_Task] OK
 
 
 Restart for updating...
+Out main2
 [BootLoader] Initialize, check new firmware
 area 0 state 2
-Detected new version 3 in QSPI area 0
+Detected new version 43 in QSPI area 0
 area 1 state 6
 Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 42
 
 Update area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 43
 
 [BootLoader] Update
-[BootLoader] new main2 to ROM 0x81e0001
-- Update new firmware version 3 from QSPI 0x90010000 (4096 bytes) to FLASH 0x081d0000
-Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+[BootLoader] new main2 to ROM 0x081e0000
+- Update new firmware version 43 from QSPI 0x90010000 (4096 bytes) to FLASH 0x081e0000
+Flash erase [0x081e0000:0x081e0fff] (0x1000 bytes) Sector7 NbOfSectors1
 - Update completed (4096 bytes)
 - Update completed, send reset request... (not implemented)
 [BootLoader] Restart
 [BootLoader] Initialize, check new firmware
 area 0 state 4
-area 0 (version 3) change to state 6 
+area 0 (version 43) change to state 6 
 area 1 state 6
 Backup area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 43
 
 Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 42
 
 [BootLoader] Normal startup
+Jump to main2
 [main] Initialze
-New firmware size 132 0x84
-round up program_size 4096 0x1000 
+[Download_Task] New firmware address 0x081e0000, size 136 0x88
 - Download to QSPI (area 1, address 0x90210000)
-- Erase old backup area 1 (version 2) before downloading
+- Erase old backup area 1 (version 42) before downloading
 Erase area 1 0x90200000
-- Download completed version 4 to QSPI (area 1, address 0x90210000, size 4096 bytes)
+- Download completed version 44 to QSPI (area 1, address 0x90210000, size 4096 bytes)
 - Download completed, send reset request... (not implemented)
+
+0.[90210000] 80b524f6 c0fb24f6 6dfc0020 23f622f9    €µ$ö Àû$ö mü1.[90210010] 022023f6 1ff90120 23f61cf9 0ea023f6     #ö ù  #öù  #ö
+2.[90210020] 05f923f6 4afa23f6 4cfa30b1 094823f6    ù#ö Jú#ö Lú0± 	H#ö
+3.[90210030] fdf80220 23f636f9 fee724f6 43fb00bf    ýø  #ö6ù þç$ö Cû4.[90210040] 0aa023f6 f3f841f2 8830bde8 024024f6    
+ #ö óøAò ˆ0½è @$ö
+5.[90210050] 59bc0000 30480008 5b6d6169 6e5d2049    Y¼6.[90210060] 6e697469 616c7a65 0a000000 0a0a5265    niti alze 
+
+Re
+7.[90210070] 73746172 7420666f 72207570 64617469    star t fo r up dati
+8.[90210080] 6e672e2e 2e0a0000 ffffffff ffffffff    ng.. .
+9.[90210090] ffffffff ffffffff ffffffff ffffffff    ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ
+
 [Download_Task] OK
 
 
 Restart for updating...
+Out main2
 [BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 2
-Detected new version 4 in QSPI area 1
+Detected new version 44 in QSPI area 1
 Backup area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 43
 
 Update area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 4
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 44
 
 [BootLoader] Update
-[BootLoader] new main2 to ROM 0x81e0001
-- Update new firmware version 4 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081d0000
-Flash erase [0x081d0000:0x081d0fff] (0x1000 bytes) Sector6 NbOfSectors1
+[BootLoader] new main2 to ROM 0x081e0000
+- Update new firmware version 44 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081e0000
+Flash erase [0x081e0000:0x081e0fff] (0x1000 bytes) Sector7 NbOfSectors1
 - Update completed (4096 bytes)
 - Update completed, send reset request... (not implemented)
 [BootLoader] Restart
 [BootLoader] Initialize, check new firmware
 area 0 state 6
 area 1 state 4
-area 1 (version 4) change to state 6 
+area 1 (version 44) change to state 6 
 Backup area 1 info:
 [QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 4
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 44
 
 Update area 0 info:
 [QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
-[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 3
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 43
 
 [BootLoader] Normal startup
+Jump to main2
 [main] Initialze
-New firmware size 132 0x84
-round up program_size 4096 0x1000 
+[Download_Task] New firmware address 0x081e0000, size 136 0x88
 - Download to QSPI (area 0, address 0x90010000)
-- Erase old backup area 0 (version 3) before downloading
+- Erase old backup area 0 (version 43) before downloading
 Erase area 0 0x90000000
+- Download completed version 45 to QSPI (area 0, address 0x90010000, size 4096 bytes)
+- Download completed, send reset request... (not implemented)
+
+0.[90010000] 80b524f6 c0fb24f6 6dfc0020 23f622f9    €µ$ö Àû$ö mü1.[90010010] 022023f6 1ff90120 23f61cf9 0ea023f6     #ö ù  #öù  #ö
+2.[90010020] 05f923f6 4afa23f6 4cfa30b1 094823f6    ù#ö Jú#ö Lú0± 	H#ö
+3.[90010030] fdf80220 23f636f9 fee724f6 43fb00bf    ýø  #ö6ù þç$ö Cû4.[90010040] 0aa023f6 f3f841f2 8830bde8 024024f6    
+ #ö óøAò ˆ0½è @$ö
+5.[90010050] 59bc0000 30480008 5b6d6169 6e5d2049    Y¼6.[90010060] 6e697469 616c7a65 0a000000 0a0a5265    niti alze 
+
+Re
+7.[90010070] 73746172 7420666f 72207570 64617469    star t fo r up dati
+8.[90010080] 6e672e2e 2e0a0000 ffffffff ffffffff    ng.. .
+9.[90010090] ffffffff ffffffff ffffffff ffffffff    ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ
+
+[Download_Task] OK
+
+
+Restart for updating...
+Out main2
+[BootLoader] Initialize, check new firmware
+area 0 state 2
+Detected new version 45 in QSPI area 0
+area 1 state 6
+Backup area 1 info:
+[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 44
+
+Update area 0 info:
+[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 2
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 45
+
+[BootLoader] Update
+[BootLoader] new main2 to ROM 0x081e0000
+- Update new firmware version 45 from QSPI 0x90010000 (4096 bytes) to FLASH 0x081e0000
+Flash erase [0x081e0000:0x081e0fff] (0x1000 bytes) Sector7 NbOfSectors1
+- Update completed (4096 bytes)
+- Update completed, send reset request... (not implemented)
+[BootLoader] Restart
+[BootLoader] Initialize, check new firmware
+area 0 state 4
+area 0 (version 45) change to state 6 
+area 1 state 6
+Backup area 0 info:
+[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 45
+
+Update area 1 info:
+[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 44
+
+[BootLoader] Normal startup
+Jump to main2
+[main] Initialze
+[Download_Task] New firmware address 0x081e0000, size 136 0x88
+- Download to QSPI (area 1, address 0x90210000)
+- Erase old backup area 1 (version 44) before downloading
+Erase area 1 0x90200000
+- Download completed version 46 to QSPI (area 1, address 0x90210000, size 4096 bytes)
+- Download completed, send reset request... (not implemented)
+
+0.[90210000] 80b524f6 c0fb24f6 6dfc0020 23f622f9    €µ$ö Àû$ö mü1.[90210010] 022023f6 1ff90120 23f61cf9 0ea023f6     #ö ù  #öù  #ö
+2.[90210020] 05f923f6 4afa23f6 4cfa30b1 094823f6    ù#ö Jú#ö Lú0± 	H#ö
+3.[90210030] fdf80220 23f636f9 fee724f6 43fb00bf    ýø  #ö6ù þç$ö Cû4.[90210040] 0aa023f6 f3f841f2 8830bde8 024024f6    
+ #ö óøAò ˆ0½è @$ö
+5.[90210050] 59bc0000 30480008 5b6d6169 6e5d2049    Y¼6.[90210060] 6e697469 616c7a65 0a000000 0a0a5265    niti alze 
+
+Re
+7.[90210070] 73746172 7420666f 72207570 64617469    star t fo r up dati
+8.[90210080] 6e672e2e 2e0a0000 ffffffff ffffffff    ng.. .
+9.[90210090] ffffffff ffffffff ffffffff ffffffff    ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ
+
+[Download_Task] OK
+
+
+Restart for updating...
+Out main2
+[BootLoader] Initialize, check new firmware
+area 0 state 6
+area 1 state 2
+Detected new version 46 in QSPI area 1
+Backup area 0 info:
+[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 45
+
+Update area 1 info:
+[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 2
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 46
+
+[BootLoader] Update
+[BootLoader] new main2 to ROM 0x081e0000
+- Update new firmware version 46 from QSPI 0x90210000 (4096 bytes) to FLASH 0x081e0000
+Flash erase [0x081e0000:0x081e0fff] (0x1000 bytes) Sector7 NbOfSectors1
+- Update completed (4096 bytes)
+- Update completed, send reset request... (not implemented)
+[BootLoader] Restart
+[BootLoader] Initialize, check new firmware
+area 0 state 6
+area 1 state 4
+area 1 (version 46) change to state 6 
+Backup area 1 info:
+[QSPI] area: 0x90200000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90210000 , size 0x00001000 (4096) , version 46
+
+Update area 0 info:
+[QSPI] area: 0x90000000 , size 0x00200000 (2097152), state: 6
+[QSPI] program: 0x90010000 , size 0x00001000 (4096) , version 45
+
+[BootLoader] Normal startup
+Jump to main2
+[main] Initialze
+[Download_Task] New firmware address 0x081e0000, size 136 0x88
+- Download to QSPI (area 0, address 0x90010000)
+- Erase old backup area 0 (version 45) before downloading
+Erase area 0 0x90000000
+- Download completed version 47 to QSPI (area 0, address 0x90010000, size 4096 bytes)
+- Download completed, send reset request... (not implemented)
+
+0.[90010000] 80b524f6 c0fb24f6 6dfc0020 23f622f9    €µ$ö Àû$ö mü1.[90010010] 022023f6 1ff90120 23f61cf9 0ea023f6     #ö ù  #öù  #ö
+2.[90010020] 05f923f6 4afa23f6 4cfa30b1 094823f6    ù#ö Jú#ö Lú0± 	H#ö
+3.[90010030] fdf80220 23f636f9 fee724f6 43fb00bf    ýø  #ö6ù þç$ö Cû4.[90010040] 0aa023f6 f3f841f2 8830bde8 024024f6    
+ #ö óøAò ˆ0½è @$ö
+5.[90010050] 59bc0000 30480008 5b6d6169 6e5d2049    Y¼6.[90010060] 6e697469 616c7a65 0a000000 0a0a5265    niti alze 
+
+Re
+7.[90010070] 73746172 7420666f 72207570 64617469    star t fo r up dati
+8.[90010080] 6e672e2e 2e0a0000 ffffffff ffffffff    ng.. .
+9.[90010090] ffffffff ffffffff ffffffff ffffffff    ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ ÿÿÿÿ
+
+[Download_Task] OK
+
+
+Restart for updating...

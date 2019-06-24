@@ -572,6 +572,7 @@ FWUPDATE_ERR_CODE FWUPDATE_Download(uint32_t src)
   if(fwp->state == FWUPDATE_AREA_STATUS_DOWNLOAD_COMPLETE)
   {
     printf("- Download completed, send reset request... (not implemented)\n");
+    display_qspi_memory(fwp->program_start_addr);
     ret = FWUPDATE_ERR_OK;
   }
   

@@ -90,6 +90,7 @@
 // #pragma section =".qspi_init"
 #pragma section =".boot_loader"
 #pragma section =".main"
+#pragma section =".main2"
 
 /* Private variables ---------------------------------------------------------*/
 QSPI_HandleTypeDef QSPIHandle;
@@ -130,7 +131,7 @@ static inline void display_memory(uint32_t address);
 static inline void display_qspi_memory(uint32_t address);
 static inline void create_write_data(uint8_t* buf, uint32_t buf_size, uint8_t* str, uint32_t str_len);
 static void main2(void);
-
+void main_new(void);
 static void BlinkLed(void);
 
 // FLASH_EraseProgram
@@ -151,13 +152,16 @@ int main(void)
   
   boot_loader_update();
 
+  printf("Jump to main2\n");
   main2();
-
+  printf("Out main2\n");
+  
   /* Reset system */
   Reset_Handler();
+  
+  main_new();
 }
 
-// #pragma section =".boot_loader"
 void boot_loader_update(void)
 {
    
@@ -190,29 +194,33 @@ void boot_loader_update(void)
   if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
   {
     printf("FWUPDATE_InitQSPI error\n");
-    Error_Handler();
+    while(1)
+    {
+    }
   }
   
   FWUPDATE_Init();
   
   if(FWUPDATE_IsNewOS() == 1)
   {
-    void (*fp)(void) = &main2;
+    // void (*fp)(void) = &main2;
     // uint32_t rom_addr = (uint32_t)fp;
     
-    uint32_t rom_addr = 0x081D0000; // 0x08160000; // Example Sector 3 Bank 1
+    // uint32_t rom_addr = 0x081D0000; // 0x08160000; // Example Sector 3 Bank 1
     
-    // flash_addr = (uint8_t *)(__section_begin(".qspi_init"));
+    uint32_t rom_addr = (uint32_t)(__section_begin(".main"));
+    // uint32_t rom_addr = (uint32_t)(0x081E0000);
     
     printf("[BootLoader] Update\n");
-    printf("[BootLoader] new main2 to ROM 0x%p\n", fp);
+    printf("[BootLoader] new main2 to ROM 0x%08x\n", rom_addr);
     BSP_LED_On(LED1);
     FWUPDATE_Update(0, rom_addr, 0);  // test update new firmware to 0x08160000
-    HAL_Delay(1000);
+
     LED2_GPIO_PORT->ODR ^= LED1_PIN;
     
     /* Reset system */
     printf("[BootLoader] Restart\n");
+    HAL_Delay(5000);
     Reset_Handler();
   } else
   {
@@ -221,40 +229,39 @@ void boot_loader_update(void)
 
 }
 
-uint8_t downldata[FW_DOWNLOAD_BUFFER_SIZE*4 + 500];
+
 static void Download_Task(void)
 {
   int ret = 0;
-  // uint32_t program_size = FW_DOWNLOAD_BUFFER_SIZE*4 + 500;;
-  const uint32_t qspi_buf_size = FW_DOWNLOAD_BUFFER_SIZE;
   
+  const uint32_t qspi_buf_size = FW_DOWNLOAD_BUFFER_SIZE;
   
   // /* Receive data from uart */
   // /* Write to QSPI write buffer */
-
   // create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
   
-  
+  // uint32_t program_size = FW_DOWNLOAD_BUFFER_SIZE*4;
   uint32_t program_size = __section_size(".main");
-  // uint32_t program_addr = (uint32_t)downldata;
-  uint32_t program_addr = (uint32_t)(__section_begin(".main")); // examples 0x081e0001
-  printf("New firmware size %d 0x%x\n", program_size, program_size);
+  uint32_t program_addr = (uint32_t)(__section_begin(".main")); // 0x081e0000
+
+  
+  // uint32_t program_size = __section_size(".main2");
+  // uint32_t program_addr = (uint32_t)(__section_begin(".main2")); // 0x081f0000
+
+  printf("[Download_Task] New firmware address 0x%08x, size %d 0x%x\n", program_addr, program_size, program_size);
+
   uint32_t count = program_size;
 
   
-   // printf("program_size %d 0x%x \n", program_size, program_size);
   if(program_size%qspi_buf_size)
   {
     program_size = (program_size/qspi_buf_size)*qspi_buf_size + (((program_size%qspi_buf_size + qspi_buf_size-1)/qspi_buf_size)*qspi_buf_size);
-printf("round up program_size %d 0x%x \n", program_size, program_size);
+    printf("[Download_Task] round up program_size %d 0x%x \n", program_size, program_size);
   }
-  
- 
   
   FWUPDATE_Download_Config(program_size, qspi_buf_size);
 
   do
-  // for(int i = 0; i<6; i++)
   {
     if(count < qspi_buf_size)
     {
@@ -287,9 +294,6 @@ printf("round up program_size %d 0x%x \n", program_size, program_size);
       while(1);
     }
   } while(count > 0);
-  
-  // display_qspi_memory(0x90200000);
-  // display_qspi_memory(EXTROM_AREA_2_ADDRESS+0x0fff0);
 
 }
 
@@ -600,10 +604,61 @@ static void main2(void) @ ".main"
   // while(1);
   
   printf("\n\nRestart for updating...\n");
-  HAL_Delay(10000);
+  HAL_Delay(5000);
   
 }
 
+
+void main_new(void) @ ".main2"
+{
+  
+  /* Enable the CPU Cache */
+  CPU_CACHE_Enable();
+  /* STM32H7xx HAL library initialization:
+
+       - Systick timer is configured by default as source of time base, but user 
+         can eventually implement his proper time base source (a general purpose 
+         timer for example or other time source), keeping in mind that Time base 
+         duration should be kept 1ms since PPP_TIMEOUT_VALUEs are defined and 
+         handled in milliseconds basis.
+       - Set NVIC Group Priority to 4
+       - Low Level Initialization
+     */
+  HAL_Init();
+
+  /* Configure the system clock to 400 MHz */
+  /* SystemClock_Config(); */
+ 
+  BSP_LED_Init(LED1);
+  BSP_LED_Init(LED3);
+  BSP_LED_Init(LED2);
+  
+  
+  printf("[main] Initialze\n");
+  FWUPDATE_InitFlash();
+  
+  /* Initialize QuadSPI ------------------------------------------------------ */
+  if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
+  {
+    printf("FWUPDATE_InitQSPI error\n");
+    Error_Handler();
+  }
+  
+  // FWUPDATE_Init();
+  Download_Task(); // v2
+
+
+////////////////////////////////
+  printf("New feature Blink LED2 On\n");
+  BSP_LED_On(LED1 | LED2 | LED3);
+  HAL_Delay(10000);
+  LED1_GPIO_PORT->ODR ^= LED1_PIN;
+
+  
+  printf("\n\nRestart for updating...\n");
+  HAL_Delay(5000);
+  
+}
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 
