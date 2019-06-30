@@ -26,9 +26,9 @@ extern "C" {
 /* Public function prototypes -----------------------------------------------*/
 void uart_init(void);
 
-int uart_read_8bit(uint8_t *data8);
-int uart_read_32bit(uint32_t *data32);
-int uart_read_64bit(uint64_t *data64);
+int uart_read_8bit(uint8_t *data8, uint32_t Timeout);
+int uart_read_32bit(uint32_t *data32, uint32_t Timeout);
+int uart_read_64bit(uint64_t *data64, uint32_t Timeout);
 int uart_read_512byte(uint8_t *pData);
 int uart_read_buffer(uint8_t *pData, uint16_t Size, uint32_t Timeout);
 void uart_print_msg(uint8_t* msg, uint32_t len);

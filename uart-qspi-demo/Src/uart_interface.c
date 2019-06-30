@@ -37,7 +37,7 @@ static uint32_t size = 0, checksum = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint32_t size);
+static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout);
 static void Error_Handler(void);
 
 
@@ -46,9 +46,9 @@ static void Error_Handler(void);
 /* 
  * Return the number of byte received, otherwise return -1
  */
-static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint32_t size)
+static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
-  HAL_StatusTypeDef ret;
+  // HAL_StatusTypeDef ret;
   // uartRxCplt = 0;
   // do
   // {
@@ -56,43 +56,74 @@ static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint32_t size)
   // } while(uartRxCplt == 0);
   // uartRxCplt = 0;
 
-  do 
+  __IO int16_t RxXferCount;
+  HAL_StatusTypeDef ret;
+  int nbytes = 0;
+  
+  if ((pData == NULL) || (size == 0U))
   {
-    ret = HAL_UART_Receive(&huart3, pData, size, 3000);
+    return -1;
+  }
+  
+  RxXferCount = size;
 
-    if(ret == HAL_TIMEOUT)
+  while (RxXferCount > 0U)
+  {
+    ret = HAL_UART_Receive(&huart3, pData, size, Timeout);
+    if (ret == HAL_TIMEOUT)
     {
-      // continue;
-      // break;
       return 0;
     }
-    if(ret == HAL_ERROR)
+    
+    if (ret == HAL_ERROR)
     {
       return -1;
     }
-    if(ret == HAL_OK)
+    
+    if (ret == HAL_OK)
     {
       return size;
-      break;
     }
-  } while(1);
+
+    RxXferCount -= size;
+  }
+  return size;
   
-  return ret;
+  // do 
+  // {
+    // ret = HAL_UART_Receive(&huart3, pData, size, Timeout);
+
+    // if(ret == HAL_TIMEOUT)
+    // {
+      // return 0;
+    // }
+    // if(ret == HAL_ERROR)
+    // {
+      // return -1;
+    // }
+    // if(ret == HAL_OK)
+    // {
+      // return size;
+      // break;
+    // }
+  // } while(1);
+  
+  // return ret;
 }
 
-int uart_read_8bit(uint8_t *data8)
+int uart_read_8bit(uint8_t *data8, uint32_t Timeout)
 {
-  return uart_read((uint8_t*)data8, 1);
+  return uart_read((uint8_t*)data8, 1, Timeout);
 }
 
-int uart_read_32bit(uint32_t *data32)
+int uart_read_32bit(uint32_t *data32, uint32_t Timeout)
 {
-  return uart_read((uint8_t*)data32, 4);
+  return uart_read((uint8_t*)data32, 4, Timeout);
 }
 
-int uart_read_64bit(uint64_t *data64)
+int uart_read_64bit(uint64_t *data64, uint32_t Timeout)
 {
-  return uart_read((uint8_t*)data64, 8);
+  return uart_read((uint8_t*)data64, 8, Timeout);
 }
 
 
@@ -108,7 +139,8 @@ int uart_read_buffer(uint8_t *pData, uint16_t Size, uint32_t Timeout)
   uint16_t block_size = 64;
     if ((pData == NULL) || (Size == 0U))
     {
-      return  HAL_ERROR;
+      return -1;
+      // return  HAL_ERROR;
     }
   
   RxXferSize = Size;
@@ -126,7 +158,7 @@ int uart_read_buffer(uint8_t *pData, uint16_t Size, uint32_t Timeout)
       break;
     }
     
-    if (ret != HAL_OK)
+    if (ret == HAL_ERROR)
     {
       return -1;
       // return HAL_ERROR;
@@ -158,17 +190,11 @@ void uart_print_msg_list(void)
   uart_print_msg(s_msg, strlen(s_msg));
   sprintf(s_msg, "FWUPDATE_MSG_OK 0x%02x\r\n", FWUPDATE_MSG_OK);
   uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_NOT_OK 0x%02x\r\n", FWUPDATE_MSG_NOT_OK);
+  sprintf(s_msg, "FWUPDATE_MSG_NG 0x%02x\r\n", FWUPDATE_MSG_NG);
   uart_print_msg(s_msg, strlen(s_msg));
   sprintf(s_msg, "FWUPDATE_MSG_UPDATE_REQUEST 0x%02x\r\n", FWUPDATE_MSG_UPDATE_REQUEST);
   uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_DOWNLOAD_REQUEST 0x%02x\r\n", FWUPDATE_MSG_DOWNLOAD_REQUEST);
-  uart_print_msg(s_msg, strlen(s_msg));
   sprintf(s_msg, "FWUPDATE_MSG_FW_INFO 0x%02x\r\n", FWUPDATE_MSG_FW_INFO);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_FW_INFO_SIZE 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_SIZE);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_FW_INFO_CHECKSUM 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_CHECKSUM);
   uart_print_msg(s_msg, strlen(s_msg));
   sprintf(s_msg, "FWUPDATE_MSG_FW_INFO_DATA 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_DATA);
   uart_print_msg(s_msg, strlen(s_msg));

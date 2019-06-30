@@ -1,37 +1,37 @@
-"E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c"
+"E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c"
 -std=c11
 -ferror-limit=0
 -fbracket-depth=512
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\STM32H7xx_HAL_Driver\Src
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\STM32H7xx_HAL_Driver\Src
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM/../Inc
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM/../Inc
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM/../Drivers/STM32H7xx_HAL_Driver/Inc
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM/../Drivers/STM32H7xx_HAL_Driver/Inc
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM/../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM/../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM/../Drivers/CMSIS/Device/ST/STM32H7xx/Include
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM/../Drivers/CMSIS/Device/ST/STM32H7xx/Include
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM/../Drivers/CMSIS/Include
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM/../Drivers/CMSIS/Include
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\EWARM\..\Drivers\BSP\STM32H7xx_Nucleo_144
+E:\STM32_QSPI\Workspace\uart-qspi-demo\EWARM\..\Drivers\BSP\STM32H7xx_Nucleo_144
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\arm\inc
 -I
 C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\arm\inc\c
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Inc
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Inc
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\STM32H7xx_HAL_Driver\Inc
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\STM32H7xx_HAL_Driver\Inc
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\STM32H7xx_HAL_Driver\Inc\Legacy
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\STM32H7xx_HAL_Driver\Inc\Legacy
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\CMSIS\Device\ST\STM32H7xx\Include
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\CMSIS\Device\ST\STM32H7xx\Include
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\CMSIS\Include
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\CMSIS\Include
 -I
-E:\STM32_QSPI\Workspace\UART_sample - Copy\Drivers\BSP\STM32H7xx_Nucleo_144
+E:\STM32_QSPI\Workspace\uart-qspi-demo\Drivers\BSP\STM32H7xx_Nucleo_144
 -D__CHAR_BITS__=8
 -D__CHAR_MAX__=0xff
 -D__CHAR_MIN__=0
