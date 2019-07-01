@@ -99,9 +99,7 @@ static void MX_GPIO_Init(void);
 // static void MX_USART3_UART_Init(void);
 static void MX_QUADSPI_Init(void);
 /* USER CODE BEGIN PFP */
-static void CPU_CACHE_Enable(void);
-static void Download_Task(void);
-static void Update_Task(void);
+static inline void CPU_CACHE_Enable(void);
 static void boot_loader_update(void);
 static inline void display_memory(uint32_t address);
 static inline void display_qspi_memory(uint32_t address);
@@ -284,15 +282,22 @@ void boot_loader_update(void)
   SystemClock_Config();
  
   BSP_LED_Init(LED1);
-  
-  printf("[BootLoader] Initialize, check new firmware\n");
+#ifdef UART_PRINT
+  uart_print(s_msg, "[BootLoader] Initialize, check new firmware\r\n");
+#else
+  DEBUG_PRINT("[BootLoader] Initialize, check new firmware\n");
+#endif
   
   FWUPDATE_InitFlash();
   
   /* Initialize QuadSPI ------------------------------------------------------ */
   if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
   {
-    printf("FWUPDATE_InitQSPI error\n");
+#ifdef UART_PRINT
+  uart_print(s_msg, "FWUPDATE_InitQSPI error\r\n");
+#else
+  DEBUG_PRINT("FWUPDATE_InitQSPI error\n");
+#endif
     while(1)
     {
     }
@@ -305,95 +310,33 @@ void boot_loader_update(void)
     // uint32_t rom_addr = 0x081D0000; // 0x08160000; // Example Sector 3 Bank 1
     // uint32_t rom_addr = (uint32_t)(0x081E0000);  // empty sector
     uint32_t rom_addr = (uint32_t)(__section_begin(".main"));  
-    // uint32_t rom_addr = (uint32_t)(__section_begin(".main2"));
 
-    printf("[BootLoader] Update new main at ROM 0x%08x\n", rom_addr);
-    // sprintf(s_msg, "[BootLoader] Update new main at ROM 0x%08x\r\n", rom_addr);
-    // uart_print_msg(s_msg, strlen(s_msg));
+#ifdef UART_PRINT
+    uart_print(s_msg, "[BootLoader] Update new main at ROM 0x%08x\n", rom_addr);
+#else
+    DEBUG_PRINT("[BootLoader] Update new main at ROM 0x%08x\n", rom_addr);
+#endif
+    
     FWUPDATE_Update(0, rom_addr, 0);
     
     /* Reset system */
-    printf("[BootLoader] Restart\n");
+#ifdef UART_PRINT
+    uart_print(s_msg, "[BootLoader] Restart\r\n");
+#else
+    DEBUG_PRINT("[BootLoader] Restart\n");
+#endif
+    
     // HAL_Delay(5000);
     Reset_Handler();
   } else
   {
-    printf("[BootLoader] Normal startup\n");
+#ifdef UART_PRINT
+    uart_print(s_msg, "[BootLoader] Normal startup\r\n");
+#else
+    DEBUG_PRINT("[BootLoader] Normal startup\n");
+#endif
   }
 
-}
-
-
-static void Download_Task(void)
-{
-  int ret = 0;
-  
-  // const uint32_t qspi_buf_size = FW_DOWNLOAD_BUFFER_SIZE;
-  
-  // /* Receive data from uart */
-  // /* Write to QSPI write buffer */
-  // create_write_data(qspi_wr_buf, sizeof(qspi_wr_buf), "!@#$%^&*()ABCDQWER9876ABCD<>:][+", 32);
-  
-  // uint32_t program_size = FW_DOWNLOAD_BUFFER_SIZE*4;
-  
-  uint32_t program_size = __section_size(".main"); // 0x081e0000, size 124 0x7c
-  uint32_t program_addr = (uint32_t)(__section_begin(".main")); // 0x081e0000
-
-  
-  // uint32_t program_size = __section_size(".main2"); // 0x081c0000
-  // uint32_t program_addr = (uint32_t)(__section_begin(".main2")); // 0x081c0000
-
-  printf("[Download_Task] New firmware address 0x%08x, size %d 0x%x\n", program_addr, program_size, program_size);
-
-  // uint32_t program_count = program_size;
-  program_count = program_size;
-  
-  // if(program_size%qspi_buf_size)
-  // {
-    // program_size = (program_size/qspi_buf_size)*qspi_buf_size + (((program_size%qspi_buf_size + qspi_buf_size-1)/qspi_buf_size)*qspi_buf_size);
-    // printf("[Download_Task] round up program_size %d 0x%x \n", program_size, program_size);
-  // }
-  
-  // FWUPDATE_Download_Config(program_size, qspi_buf_size);
-
-  do
-  {
-    if(program_count < qspi_buf_size)
-    {
-      memset(qspi_wr_buf, 0xff, qspi_buf_size); // clearn buffer
-      memcpy(qspi_wr_buf, (void*)program_addr, program_count);
-    } else 
-    {
-      ;
-    }
-    
-    ret = FWUPDATE_Download((uint32_t)&qspi_wr_buf[0]); // Write 4096 bytes to QSPI
-    
-    program_addr  += qspi_buf_size;
-    program_count -= qspi_buf_size;
-    
-    if(ret == FWUPDATE_ERR_OK)
-    {
-      printf("[Download_Task] OK\n");
-      break;
-    } else if(ret == FWUPDATE_ERR_BUSY)
-    {
-      printf("[Download_Task] busy\n");
-    } else
-    {
-      printf("[Download_Task] Error %d\n", ret);
-      if(ret == FWUPDATE_ERR_NOT_INITIALIZED) printf("[Download_Task] FWUPDATE_ERR_NOT_INITIALIZED\n", ret);
-      if(ret == FWUPDATE_ERR_PARAM) printf("[Download_Task] FWUPDATE_ERR_PARAM\n", ret);
-      if(ret == FWUPDATE_ERR_FATAL) printf("[Download_Task] FWUPDATE_ERR_FATAL\n", ret);
-      BSP_LED_On(LED3);
-      while(1);
-    }
-  } while(program_count > 0);
-}
-
-static void Update_Task(void)
-{
-  FWUPDATE_Update(EXTROM_AREA_2_ADDRESS, 0x08160000, 4096*4);
 }
 
 static void main_old(void) @ ".main"
@@ -429,12 +372,15 @@ static void main_old(void) @ ".main"
   /* Initialize QuadSPI ------------------------------------------------------ */
   if(FWUPDATE_InitQSPI() != FWUPDATE_ERR_OK)
   {
-    printf("FWUPDATE_InitQSPI error\n");
+#ifdef UART_PRINT
+    uart_print(s_msg, "FWUPDATE_InitQSPI error\r\n");
+#else
+    DEBUG_PRINT("FWUPDATE_InitQSPI error\r\n");
+#endif
     Error_Handler();
   }
 
   // FWUPDATE_Init();
-  // Download_Task();
 
   
   uart_print_msg_list();
@@ -455,11 +401,12 @@ static void main_old(void) @ ".main"
       if(download_completed == 1)
       {
         /* Response to PC */
-        // sprintf(s_msg, "Download completed\r\n");
-        // uart_print_msg(s_msg, strlen(s_msg));
-        printf("Download completed. Request to reset\r\n");
+#ifdef UART_PRINT
+        uart_print(s_msg, "Download completed. Request to reset\r\n");
+#else
+        DEBUG_PRINT("Download completed. Request to reset\r\n");
+#endif
       }
-
       continue;
     }
     
@@ -599,20 +546,29 @@ static inline void print_msg_request(uint8_t msg)
   {
     case FWUPDATE_MSG_UPDATE_REQUEST:
     {
-      sprintf(s_msg, "Start updating...\r\n");
-      uart_print_msg(s_msg, strlen(s_msg));
+#ifdef UART_PRINT
+      uart_print(s_msg, "Start updating...\r\n");
+#else
+      DEBUG_PRINT("Start updating...\r\n");
+#endif
       break;
     }
     case FWUPDATE_MSG_QSPI_ERASE:
     {
-      sprintf(s_msg, "Start clearing all QSPI...\r\n");
-      uart_print_msg(s_msg, strlen(s_msg));
+#ifdef UART_PRINT
+      uart_print(s_msg, "Start clearing all QSPI...\r\n");
+#else
+      DEBUG_PRINT("Start clearing all QSPI...\r\n");
+#endif
       break;
     }
     case FWUPDATE_MSG_RESET_REQUEST:
     {
-      sprintf(s_msg, "Start reseting...\r\n");
-      uart_print_msg(s_msg, strlen(s_msg));
+#ifdef UART_PRINT
+      uart_print(s_msg, "Start reseting...\r\n");
+#else
+      DEBUG_PRINT("Start reseting...\r\n");
+#endif
       break;
     }
     case FWUPDATE_MSG_FW_INFO:
@@ -630,9 +586,8 @@ static inline void do_reset(void)
   // HAL_Delay(5000); // do nothing
   
   /* Response to PC */
-  sprintf(s_msg, "OK");
-  uart_print_msg(s_msg, strlen(s_msg));
-  
+  uart_print(s_msg, "OK");
+
   /* Reset system */
   Reset_Handler();
 }
@@ -643,14 +598,12 @@ static inline void do_erase(void)
   if(EXTROM_Erase(EXTROM_AREA_1_ADDRESS, 2*EXTROM_AREA_SIZE_2MB) != FLASH_ERR_OK)
   {
     /* Response to PC */
-    sprintf(s_msg, "NG");
-    uart_print_msg(s_msg, strlen(s_msg))  ; 
+    uart_print(s_msg, "NG");
     Error_Handler();
   } else 
   {
     /* Response to PC */
-    sprintf(s_msg, "OK");
-    uart_print_msg(s_msg, strlen(s_msg));
+    uart_print(s_msg, "OK");
   }
 }
 
@@ -678,11 +631,20 @@ static inline void do_download_init(void)
   // download_flag = 1;
   
   /* Response to PC */
-  sprintf(s_msg, "OK");
-  uart_print_msg(s_msg, strlen(s_msg));
-  
-  sprintf(s_msg, "Request to send size, checksum, new firmware data\r\n");
-  uart_print_msg(s_msg, strlen(s_msg));
+  uart_print(s_msg, "OK");
+
+#ifdef UART_PRINT
+  uart_print(s_msg, "Request to send size, checksum, new firmware data\r\n");
+  uart_print(s_msg, "Frame data definitions: [cmd][data0][data1]...\r\n");
+  uart_print(s_msg, "[0x%02x][size(4-bytes)][checksum(4-bytes)]\r\n", FWUPDATE_MSG_FW_INFO);
+  uart_print(s_msg, "[0x%02x][data(%d-bytes)]\r\n", FWUPDATE_MSG_FW_INFO_DATA, uart_buf_size);
+#else
+  DEBUG_PRINT("Request to send size, checksum, new firmware data\r\n");
+  DEBUG_PRINT("Frame data definitions: [cmd][data0][data1]...\r\n");
+  DEBUG_PRINT("[0x%02x][size(4-bytes)][checksum(4-bytes)]\r\n", FWUPDATE_MSG_FW_INFO);
+  DEBUG_PRINT("[0x%02x][data(%d-bytes)]\r\n", FWUPDATE_MSG_FW_INFO_DATA, uart_buf_size);
+#endif
+
 }
 
 static inline void do_set_info(void)
@@ -699,35 +661,30 @@ static inline void do_set_info(void)
   
   total_bytes = 0;
 
-    // sprintf(s_msg, "size %d\r\n", size);
-    // uart_print_msg(s_msg, strlen(s_msg));
-    printf("size %d\r\n", size);
-
   /* Set one time */
   program_count = size;
   program_size = size;
 
   if(size > 0)
   {
-    if(program_size%qspi_buf_size)
-    {
-      qspi_program_size = wrap_to_qspi_buf_size(program_size, qspi_buf_size);
-      printf("wrapped qspi_program_size %d 0x%x \n", qspi_program_size, qspi_program_size);
-    }
-
+    qspi_program_size = wrap_to_qspi_buf_size(program_size, qspi_buf_size);
     /* Configure total program size will be downloaded */
     FWUPDATE_Download_Config(qspi_program_size, qspi_buf_size);
   }
-
   /* Response to PC */
   if(size == 0 || checksum == 0)
   {
-    sprintf(s_msg, "NG");
+    uart_print(s_msg, "NG");
   } else 
   {
-    sprintf(s_msg, "OK");
+    uart_print(s_msg, "OK");
   }
-  uart_print_msg(s_msg, strlen(s_msg));
+
+#ifdef UART_PRINT
+  uart_print(s_msg, "New firmware size %d, size on QSPI Flash %d, checksum 0x%08x\r\n", size, qspi_program_size, checksum);
+#else
+  DEBUG_PRINT("New firmware size %d, size on QSPI Flash %d, checksum 0x%08x\r\n", size, qspi_program_size, checksum);
+#endif
 }
 
 static inline void do_uart_rx_data(void)
@@ -736,6 +693,7 @@ static inline void do_uart_rx_data(void)
   uint8_t* p = qspi_wr_buf;
   uint32_t __size = uart_buf_size;
   
+  BSP_LED_On(LED2);
   if(program_count < uart_buf_size)
   {
     memset(uart_rx_buf, 0xff, uart_buf_size);  // Clear uart rx buffer
@@ -752,6 +710,7 @@ static inline void do_uart_rx_data(void)
 
   if( (uart_rx_cnt == 0) && (program_count < qspi_buf_size) )
   {
+    // printf("%d < %d\n", program_count, qspi_buf_size);
     memset((void*)&qspi_wr_buf, 0xff, qspi_buf_size); // Clear qspi data
   }
   
@@ -759,14 +718,17 @@ static inline void do_uart_rx_data(void)
   memcpy((void*)(p + uart_rx_cnt*uart_buf_size), (void*)uart_rx_buf , uart_buf_size);
   
   uart_rx_cnt++;
-  
-  if(program_count == (uart_buf_size*uart_rx_cnt) )
+  // printf("program_count %d, uart_rx_cnt %d\n",program_count, uart_rx_cnt);
+  if(/* (program_count < qspi_buf_size)  &&*/ (uart_buf_size*uart_rx_cnt) == program_count)
   {
+    // printf("change uart_rx_cnt %d to max \n", uart_rx_cnt);
     uart_rx_cnt = UART_RX_CNT_MAX;
   }
   
+  
   if(uart_rx_cnt == UART_RX_CNT_MAX)
   {
+    // printf("max uart_rx_cnt == %d\n", UART_RX_CNT_MAX);
     uart_rx_cnt = 0;
     
     /* Copy to QSPI buffer */
@@ -784,7 +746,7 @@ static inline void do_uart_rx_data(void)
       /* Response to PC */
       sprintf(s_msg, "NOK");
       uart_print_msg(s_msg, strlen(s_msg));
-      printf("Download error\r\n");
+      // printf("Download error\r\n");
       BSP_LED_On(LED3);
       while(1);
     }
@@ -804,15 +766,16 @@ static inline void do_uart_rx_data(void)
   {
     /* Increase total byte received */
     total_bytes += nbytes;
-    sprintf(s_msg, "OK");
+    // printf("total_bytes %d, program_count %d\n", total_bytes, program_count);
+    uart_print(s_msg, "OK");
   }
   else
   {
-    sprintf(s_msg, "NG");
+    uart_print(s_msg, "NG");
   }
-  uart_print_msg(s_msg, strlen(s_msg));
 
 exit:
+  BSP_LED_Off(LED2);
 }
 
 /**
@@ -820,7 +783,7 @@ exit:
   * @param  None
   * @retval None
   */
-static void CPU_CACHE_Enable(void)
+static inline void CPU_CACHE_Enable(void)
 {
   /* Enable I-Cache */
   SCB_EnableICache();

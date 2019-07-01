@@ -34,6 +34,10 @@ int uart_read_buffer(uint8_t *pData, uint16_t Size, uint32_t Timeout);
 void uart_print_msg(uint8_t* msg, uint32_t len);
 void uart_print_msg_list(void);
 
+#define uart_print(s_msg, fmt, args...) { \
+  sprintf(s_msg, fmt, ##args); \
+  uart_print_msg(s_msg, strlen(s_msg)); }\
+  
 #ifdef __cplusplus
 }
 #endif

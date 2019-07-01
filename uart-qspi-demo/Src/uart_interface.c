@@ -9,7 +9,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "uart_interface.h"
 #include "fw_update_api.h"
-
+#include "main.h"
 /* Private includes ----------------------------------------------------------*/
 #include <string.h>
 #include <stdio.h>
@@ -24,7 +24,6 @@
 
 static UART_HandleTypeDef huart3;
 
-/* USER CODE BEGIN PV */
 static __IO uint32_t tx_cnt = 0;
 static __IO uint32_t rx_cnt = 0;
 static __IO uint32_t uartRxCplt = 0;
@@ -33,11 +32,9 @@ static uint8_t tx_buf[600];//[1024];
 static uint8_t data512byte[512];
 static uint8_t msg;
 static uint32_t size = 0, checksum = 0;
-
-/* USER CODE END PV */
-
+static uint8_t s_msg[100];
 /* Private function prototypes -----------------------------------------------*/
-static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout);
+static inline int uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout);
 static void Error_Handler(void);
 
 
@@ -46,7 +43,7 @@ static void Error_Handler(void);
 /* 
  * Return the number of byte received, otherwise return -1
  */
-static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout)
+static inline int uart_read(uint8_t *pData, uint16_t size, uint32_t Timeout)
 {
   // HAL_StatusTypeDef ret;
   // uartRxCplt = 0;
@@ -88,27 +85,6 @@ static inline HAL_StatusTypeDef uart_read(uint8_t *pData, uint16_t size, uint32_
     RxXferCount -= size;
   }
   return size;
-  
-  // do 
-  // {
-    // ret = HAL_UART_Receive(&huart3, pData, size, Timeout);
-
-    // if(ret == HAL_TIMEOUT)
-    // {
-      // return 0;
-    // }
-    // if(ret == HAL_ERROR)
-    // {
-      // return -1;
-    // }
-    // if(ret == HAL_OK)
-    // {
-      // return size;
-      // break;
-    // }
-  // } while(1);
-  
-  // return ret;
 }
 
 int uart_read_8bit(uint8_t *data8, uint32_t Timeout)
@@ -185,23 +161,25 @@ void uart_print_msg(uint8_t* msg, uint32_t len)
 
 void uart_print_msg_list(void)
 {
-  char s_msg[100];
-  sprintf(s_msg, "FWUPDATE_MSG_NONE 0x%02x\r\n", FWUPDATE_MSG_NONE);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_OK 0x%02x\r\n", FWUPDATE_MSG_OK);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_NG 0x%02x\r\n", FWUPDATE_MSG_NG);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_UPDATE_REQUEST 0x%02x\r\n", FWUPDATE_MSG_UPDATE_REQUEST);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_FW_INFO 0x%02x\r\n", FWUPDATE_MSG_FW_INFO);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_FW_INFO_DATA 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_DATA);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_RESET_REQUEST 0x%02x\r\n", FWUPDATE_MSG_RESET_REQUEST);
-  uart_print_msg(s_msg, strlen(s_msg));
-  sprintf(s_msg, "FWUPDATE_MSG_QSPI_ERASE 0x%02x\r\n", FWUPDATE_MSG_QSPI_ERASE);
-  uart_print_msg(s_msg, strlen(s_msg)); 
+#ifdef UART_PRINT
+  uart_print(s_msg, "FWUPDATE_MSG_NONE 0x%02x\r\n", FWUPDATE_MSG_NONE);
+  uart_print(s_msg, "FWUPDATE_MSG_OK 0x%02x\r\n", FWUPDATE_MSG_OK);
+  uart_print(s_msg, "FWUPDATE_MSG_NG 0x%02x\r\n", FWUPDATE_MSG_NG);
+  uart_print(s_msg, "FWUPDATE_MSG_QSPI_ERASE 0x%02x\r\n", FWUPDATE_MSG_QSPI_ERASE);
+  uart_print(s_msg, "FWUPDATE_MSG_UPDATE_REQUEST 0x%02x\r\n", FWUPDATE_MSG_UPDATE_REQUEST);
+  uart_print(s_msg, "FWUPDATE_MSG_FW_INFO 0x%02x\r\n", FWUPDATE_MSG_FW_INFO);
+  uart_print(s_msg, "FWUPDATE_MSG_FW_INFO_DATA 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_DATA);
+  uart_print(s_msg, "FWUPDATE_MSG_RESET_REQUEST 0x%02x\r\n", FWUPDATE_MSG_RESET_REQUEST);
+#else
+  DEBUG_PRINT("FWUPDATE_MSG_NONE 0x%02x\r\n", FWUPDATE_MSG_NONE);
+  DEBUG_PRINT("FWUPDATE_MSG_OK 0x%02x\r\n", FWUPDATE_MSG_OK);
+  DEBUG_PRINT("FWUPDATE_MSG_NG 0x%02x\r\n", FWUPDATE_MSG_NG);
+  DEBUG_PRINT("FWUPDATE_MSG_QSPI_ERASE 0x%02x\r\n", FWUPDATE_MSG_QSPI_ERASE);
+  DEBUG_PRINT("FWUPDATE_MSG_UPDATE_REQUEST 0x%02x\r\n", FWUPDATE_MSG_UPDATE_REQUEST);
+  DEBUG_PRINT("FWUPDATE_MSG_FW_INFO 0x%02x\r\n", FWUPDATE_MSG_FW_INFO);
+  DEBUG_PRINT("FWUPDATE_MSG_FW_INFO_DATA 0x%02x\r\n", FWUPDATE_MSG_FW_INFO_DATA);
+  DEBUG_PRINT("FWUPDATE_MSG_RESET_REQUEST 0x%02x\r\n", FWUPDATE_MSG_RESET_REQUEST);
+#endif
 }
 
 /**
