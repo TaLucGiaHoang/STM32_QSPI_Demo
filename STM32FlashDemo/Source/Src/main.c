@@ -161,7 +161,7 @@ int main(void)
   // CHECK: Read QSPI flash buffer management table
   // QSPI flash buffer index starts from 0, 1, 2, ...
   current_qspi_buffer_index = FWUPDATE_Get_Current_FW_Info(&current_firmware_info);
-  
+  printf("current_qspi_buffer_index %d\n", current_qspi_buffer_index);
   next_qspi_buffer_index = (current_qspi_buffer_index + 1) % FW_AREA_NUM;
 
   if (current_qspi_buffer_index < 0) {
@@ -171,7 +171,7 @@ int main(void)
     printf("Update Firmware from QSPI buffer %d\r\n", current_qspi_buffer_index);
 
     // TODO: execute on RAM
-//    FWUPDATE_Update(current_qspi_buffer_index * FW_AREA_SIZE + sizeof(fw_header_t), FW_START_ADDR, current_firmware_info.size);
+   FWUPDATE_Update(current_qspi_buffer_index * FW_AREA_SIZE + sizeof(fw_header_t), 0x08020000 /* FW_START_ADDR */, current_firmware_info.size);
   }
   
   // TODO: Set dummy_main at fixed address and the function calling it must be in RAM.
@@ -456,6 +456,7 @@ void command_analyze(void)
         fw_info.size = firmware_size;
         fw_info.state = FWUPDATE_AREA_STATE_DOWNLOADED;
         fw_info.version = (current_firmware_info.version + 1) & 0xFF;
+        printf("next_qspi_buffer_index %d\n", next_qspi_buffer_index);
         FWUPDATE_Set_FW_Info(next_qspi_buffer_index, &fw_info);
       }
       

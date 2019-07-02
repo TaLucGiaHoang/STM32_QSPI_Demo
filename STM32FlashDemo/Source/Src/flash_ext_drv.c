@@ -511,9 +511,11 @@ int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
     return FLASH_ERR_PARAM;
   }
   
-  if(src >= EXTROM_START_ADDRESS && (src + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  src &= EXTROM_FLASH_ADDR_MASK;
+  // if(src >= EXTROM_START_ADDRESS && (src + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  if((src + num_bytes - 1) < EXTROM_FLASH_SIZE)
   {  
-    src &= EXTROM_FLASH_ADDR_MASK;
+    // src &= EXTROM_FLASH_ADDR_MASK;
     count = num_bytes;
     flash_addr = dst;
     qspi_addr = src;
