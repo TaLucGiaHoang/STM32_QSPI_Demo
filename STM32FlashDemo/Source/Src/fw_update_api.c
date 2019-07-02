@@ -788,7 +788,9 @@ int16_t FWUPDATE_Get_Current_FW_Info(fw_header_t* fw_info)
   */
 void FWUPDATE_Set_FW_Info(uint8_t area, fw_header_t* fw_info)
 {
-  EXTROM_Write((uint32_t)fw_info, (area - 1) * FW_AREA_SIZE, sizeof(fw_info));
+  EXTROM_Erase(area * FW_AREA_SIZE, 4096);
+  
+  EXTROM_Write((uint32_t)fw_info, area * FW_AREA_SIZE, sizeof(fw_header_t));
 }
 
 /* Callback functions */

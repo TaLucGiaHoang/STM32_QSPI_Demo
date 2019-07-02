@@ -419,7 +419,7 @@ void command_analyze(void)
     firmware_data_buffer_len += size;
     
     // CHECK: Calculate qspi_address based on next_qspi_buffer_index
-    qspi_address = next_qspi_buffer_index * FW_AREA_SIZE; //sizeof(fw_header_t);
+    qspi_address = next_qspi_buffer_index * FW_AREA_SIZE + 4096; //sizeof(fw_header_t);
     
     HAL_UART_Transmit(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1, 200);
   } else if (previous_cmd == CMD_FW_INFO || previous_cmd == CMD_FW_DATA) {
