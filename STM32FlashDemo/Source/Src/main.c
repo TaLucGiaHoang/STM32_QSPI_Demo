@@ -65,11 +65,11 @@ QSPI_HandleTypeDef hqspi;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t cmd_received;
+uint8_t cmd_received;
 uint8_t cmd_buffer[UART_BUFFER_SIZE];
 uint32_t firmware_size;
 uint8_t firmware_checksum;
-volatile uint8_t firmware_data_buffer[FW_DOWNLOAD_BUFFER_SIZE];
+uint8_t firmware_data_buffer[FW_DOWNLOAD_BUFFER_SIZE];
 int16_t current_qspi_buffer_index;
 int16_t next_qspi_buffer_index;
 fw_header_t current_firmware_info;
@@ -414,12 +414,12 @@ void command_analyze(void)
     } else {
       size = FW_DATA_PACKAGE_SIZE;
     }
-    HAL_UART_Receive_IT(&huart3, (uint8_t*)firmware_data_buffer, size);
+    HAL_UART_Receive_IT(&huart3, firmware_data_buffer, size);
     remain_data_size -= size;
     firmware_data_buffer_len += size;
     
     // CHECK: Calculate qspi_address based on next_qspi_buffer_index
-    qspi_address = next_qspi_buffer_index * FW_AREA_SIZE + 4096; //sizeof(fw_header_t);
+    qspi_address = next_qspi_buffer_index * FW_AREA_SIZE; //sizeof(fw_header_t);
     
     HAL_UART_Transmit(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1, 200);
   } else if (previous_cmd == CMD_FW_INFO || previous_cmd == CMD_FW_DATA) {
@@ -439,7 +439,7 @@ void command_analyze(void)
       for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
         firmware_checksum ^= firmware_data_buffer[i];
       }
-      printf("Checksum %08x\r\n", firmware_checksum);
+      
       printf("Write %d bytes to QSPI at address 0x%08x\r\n", firmware_data_buffer_len, qspi_address);
       
       qspi_address += firmware_data_buffer_len;
@@ -449,12 +449,6 @@ void command_analyze(void)
     if (remain_data_size == 0) {
       // Set current_cmd to CMD_NONE to wait for next command
       current_cmd = CMD_NONE;
-      
-      // Calculate Checksum
-      for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
-        firmware_checksum ^= firmware_data_buffer[i];
-      }
-      printf("Checksum %08x\r\n", firmware_checksum);
       
       if (firmware_checksum == 0) {
         // CHECK: Update firmware state in QSPI
@@ -473,14 +467,7 @@ void command_analyze(void)
       } else {
         size = FW_DATA_PACKAGE_SIZE;
       }
-      
-      // Calculate Checksum
-      for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
-        firmware_checksum ^= firmware_data_buffer[i];
-      }
-      printf("Checksum %08x\r\n", firmware_checksum);
-      
-      HAL_UART_Receive_IT(&huart3, (uint8_t*)&firmware_data_buffer[firmware_data_buffer_len], size);
+      HAL_UART_Receive_IT(&huart3, &firmware_data_buffer[firmware_data_buffer_len], size);
       remain_data_size -= size;
       firmware_data_buffer_len += size;
     }
@@ -545,6 +532,8 @@ void command_analyze(void)
       printf("Done\r\n");
       break;
     }
+    
+    
   }
   previous_cmd = current_cmd;
 }

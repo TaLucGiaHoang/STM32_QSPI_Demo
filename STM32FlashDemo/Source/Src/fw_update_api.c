@@ -478,37 +478,38 @@ FWUPDATE_ERR_CODE FWUPDATE_Download_Config(uint32_t firmware_size, uint32_t qspi
   */
 FWUPDATE_ERR_CODE FWUPDATE_Download (uint32_t address, uint32_t data, uint32_t num_bytes)
 {
-  int32_t ret = FWUPDATE_ERR_OK;
+  int32_t ret;
   uint8_t buffer[FW_DOWNLOAD_BUFFER_SIZE];
   
-//  // Erase EXTROM area
-//  ret = EXTROM_Erase(address, num_bytes);
-//  if (FLASH_ERR_PARAM == ret) {
-//    return FWUPDATE_ERR_PARAM;
-//  } else if (FLASH_ERR_FATAL == ret) {
-//    return FWUPDATE_ERR_FATAL;
-//  }
-//  
-//  // Write data to EXTROM
-//  ret = EXTROM_Write(data, address, num_bytes);
-//  if (FLASH_ERR_PARAM == ret) {
-//    return FWUPDATE_ERR_PARAM;
-//  } else if (FLASH_ERR_FATAL == ret) {
-//    return FWUPDATE_ERR_FATAL;
-//  }
+  // Erase EXTROM area
+  ret = EXTROM_Erase(address, num_bytes);
+  if (FLASH_ERR_PARAM == ret) {
+    return FWUPDATE_ERR_PARAM;
+  } else if (FLASH_ERR_FATAL == ret) {
+    return FWUPDATE_ERR_FATAL;
+  }
+  
+  // Write data to EXTROM
+  ret = EXTROM_Write(data, address, num_bytes);
+  if (FLASH_ERR_PARAM == ret) {
+    return FWUPDATE_ERR_PARAM;
+  } else if (FLASH_ERR_FATAL == ret) {
+    return FWUPDATE_ERR_FATAL;
+  }
   
   // TODO: Verify written data
-  ret = EXTROM_Read1(address, (uint32_t)buffer, num_bytes);
-//  if (FLASH_ERR_PARAM == ret) {
+//  ret = EXTROM_Read(address, (uint32_t)buffer, num_bytes);
+//  if (FLASH_ERR_PARAM != ret) {
 //    return FWUPDATE_ERR_PARAM;
-//  } else if (FLASH_ERR_FATAL == ret) {
+//  } else if (FLASH_ERR_FATAL != ret) {
 //    return FWUPDATE_ERR_FATAL;
 //  }
 //  if (memcmp((void*)buffer, (void*)data, num_bytes) != 0) {
 //    return FWUPDATE_ERR_FATAL;
 //  }
-
+  
   return FWUPDATE_ERR_OK;
+  
   
 //  FWUPDATE_ERR_CODE ret;
 //  uint32_t data_addr = (uint32_t)src;
@@ -787,9 +788,7 @@ int16_t FWUPDATE_Get_Current_FW_Info(fw_header_t* fw_info)
   */
 void FWUPDATE_Set_FW_Info(uint8_t area, fw_header_t* fw_info)
 {
-  EXTROM_Erase(area * FW_AREA_SIZE, 4096);
-  
-  EXTROM_Write((uint32_t)fw_info, area * FW_AREA_SIZE, sizeof(fw_header_t));
+  EXTROM_Write((uint32_t)fw_info, (area - 1) * FW_AREA_SIZE, sizeof(fw_info));
 }
 
 /* Callback functions */

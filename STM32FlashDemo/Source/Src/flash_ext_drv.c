@@ -498,64 +498,51 @@ int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
   *         FLASH_ERR_PARAM   Illegal parameter
   *         FLASH_ERR_FATAL   Failed to read to QSPI flash memory
   */
-int32_t EXTROM_Read1(uint32_t src, uint32_t dst, uint32_t num_bytes)
+int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
 {
-  HAL_Delay(100);
-  return FLASH_ERR_OK;
-}
+  __IO uint32_t qspi_addr, flash_addr;
+  const uint32_t block_size_max = 256;//128; // EXTROM_READ_BLOCK_SIZE_128BYTE
+  uint32_t block_size;
+  int32_t count;
+  QSPI_HandleTypeDef *hqspi = &QSPIHandle;
+  
+  if(num_bytes > EXTROM_READ_BLOCK_SIZE_64KB) // Max data is stored on RAM
+  {
+    return FLASH_ERR_PARAM;
+  }
+  
+  if(src >= EXTROM_START_ADDRESS && (src + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  {  
+    src &= EXTROM_FLASH_ADDR_MASK;
+    count = num_bytes;
+    flash_addr = dst;
+    qspi_addr = src;
+    
+    do
+    {
+      if(count < block_size_max)
+      {
+        block_size = count;
+      } else
+      {
+        block_size = block_size_max;
+      }
+// printf("block_size %d num_bytes %d\n", block_size, num_bytes);
+      /* Read by 128 Bytes block */
+      if (QSPI_Read(hqspi, qspi_addr, (uint8_t*)flash_addr, block_size) != HAL_OK)
+      {
+        return FLASH_ERR_FATAL;
+      }
+     
+      count -= block_size;
+      qspi_addr += block_size;
+      flash_addr += block_size;
+    } while(count > 0);
 
-int32_t EXTROM_Read(uint32_t src, uint32_t dst, uint32_t num_bytes)
-{
-//  uint32_t flash_addr;
-//  const uint32_t block_size_max = 256;//128; // EXTROM_READ_BLOCK_SIZE_128BYTE
-//  uint32_t block_size;
-//  int32_t count;
-//  QSPI_HandleTypeDef *hqspi = &QSPIHandle;
-//  
-//  uint32_t qspi_addr = src;
-//  
-//  if(num_bytes > EXTROM_READ_BLOCK_SIZE_64KB) // Max data is stored on RAM
-//  {
-//    return FLASH_ERR_PARAM;
-//  }
-  
-//  qspi_addr = 1 & EXTROM_FLASH_ADDR_MASK;
-//  HAL_Delay(1);
-  
-//  return FLASH_ERR_OK;
-//  
-//  if((src + num_bytes - 1) < EXTROM_FLASH_SIZE)
-//  {  
-//    
-//    count = num_bytes;
-//    flash_addr = dst;
-//    qspi_addr = src;
-//    
-////    do
-////    {
-////      if(count < block_size_max)
-////      {
-////        block_size = count;
-////      } else
-////      {
-////        block_size = block_size_max;
-////      }
-////// printf("block_size %d num_bytes %d\n", block_size, num_bytes);
-////      /* Read by 128 Bytes block */
-//////      if (QSPI_Read(hqspi, qspi_addr, (uint8_t*)flash_addr, block_size) != HAL_OK)
-//////      {
-//////        return FLASH_ERR_FATAL;
-//////      }
-////     
-////      count -= block_size;
-////      qspi_addr += block_size;
-////      flash_addr += block_size;
-////    } while(count > 0);
-//
-//  } else
-//  {
-//    return FLASH_ERR_PARAM;
-//  }
+  } else
+  {
+    return FLASH_ERR_PARAM;
+  }
   
   return FLASH_ERR_OK;
 }
