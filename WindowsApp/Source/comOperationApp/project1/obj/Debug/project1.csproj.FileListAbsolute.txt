@@ -1,0 +1,10 @@
+E:\STM32\sourceApp\project1\project1\bin\Debug\project1.exe.config
+E:\STM32\sourceApp\project1\project1\bin\Debug\project1.exe
+E:\STM32\sourceApp\project1\project1\bin\Debug\project1.pdb
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.csprojAssemblyReference.cache
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.Properties.Resources.resources
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.csproj.GenerateResource.cache
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.csproj.CoreCompileInputs.cache
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.exe
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.pdb
+E:\STM32\sourceApp\project1\project1\obj\Debug\project1.Form1.resources
