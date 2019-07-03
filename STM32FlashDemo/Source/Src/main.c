@@ -83,6 +83,7 @@ static void MX_QUADSPI_Init(void);
 /* USER CODE BEGIN PFP */
 static void dummy_main(void);
 static void command_analyze(void);
+static uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -435,10 +436,10 @@ void command_analyze(void)
         return;
       }
       
-      // Calculate Checksum
-      for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
-        firmware_checksum ^= firmware_data_buffer[i];
-      }
+      // /* Calculate Checksum */
+      // for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
+        // firmware_checksum ^= firmware_data_buffer[i];
+      // }
       
       printf("Write %d bytes to QSPI at address 0x%08x\r\n", firmware_data_buffer_len, qspi_address);
       
@@ -494,6 +495,9 @@ void command_analyze(void)
     case 'n':
       current_cmd = CMD_NOTIFY;
       
+      /* Calculate checksum */
+      firmware_checksum = verify_checksum((uint32_t)(next_qspi_buffer_index * FW_AREA_SIZE + 4096), firmware_size , firmware_checksum);
+      
       if (firmware_checksum == 0) {
         HAL_UART_Transmit_IT(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1);
       } else {
@@ -501,6 +505,8 @@ void command_analyze(void)
       }
       
       HAL_UART_Receive_IT(&huart3, cmd_buffer, 1);
+      
+
       break;
     case 'r':
       current_cmd = CMD_RESET;
@@ -537,6 +543,27 @@ void command_analyze(void)
     
   }
   previous_cmd = current_cmd;
+}
+
+uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum)
+{
+  uint32_t end = start + length - 1;
+  uint8_t qspi_buf[512];
+  uint32_t qspi_len = sizeof(qspi_buf);
+
+  while(start <= end)
+  {
+    if(EXTROM_Read(start, (uint32_t)qspi_buf, qspi_len) != FLASH_ERR_OK)
+    {
+      return -1;
+    }
+    for (uint32_t i = 0; i < qspi_len; i++) {
+      checksum ^= qspi_buf[i];
+    }
+    start += qspi_len;
+  }
+
+  return checksum;
 }
 
 /**

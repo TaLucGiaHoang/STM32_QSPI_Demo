@@ -739,7 +739,6 @@ FWUPDATE_ERR_CODE FWUPDATE_Update(uint32_t src, uint32_t dst, uint32_t num_bytes
   
   // if(fwp->state == FWUPDATE_AREA_STATUS_UPDATE_COMPLETE)
   {
-    printf("- Update completed, send reset request... (not implemented)\n");
     new_version_flag = 0;
     return FWUPDATE_ERR_OK;
   }

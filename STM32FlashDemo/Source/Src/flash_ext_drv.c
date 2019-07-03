@@ -51,7 +51,6 @@ static HAL_StatusTypeDef QSPI_Read(QSPI_HandleTypeDef *hqspi, __IO uint32_t addr
 void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
   CmdCplt++;
-   /* printf("callback set CmdCplt %d\n", CmdCplt); */
 }
 
 /**
@@ -62,7 +61,6 @@ void HAL_QSPI_CmdCpltCallback(QSPI_HandleTypeDef *hqspi)
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
   RxCplt++;
-   /* printf("callback set RxCplt %d\n", RxCplt); */
 }
 
 /**
@@ -73,7 +71,6 @@ void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
   TxCplt++; 
-  /* printf("callback set TxCplt %d\n", TxCplt); */
 }
 
 /**
@@ -84,7 +81,6 @@ void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 void HAL_QSPI_StatusMatchCallback(QSPI_HandleTypeDef *hqspi)
 {
   StatusMatch++;
-   /* printf("callback set StatusMatch %d\n", StatusMatch); */
 }
 
 
@@ -246,14 +242,12 @@ static HAL_StatusTypeDef QSPI_Write(QSPI_HandleTypeDef *hqspi, __IO uint32_t add
 
   if(size > block_size)
   {
-    printf("size > %d\n", block_size);
     return HAL_ERROR;
   }
   
   address &= EXTROM_FLASH_ADDR_MASK;
   if((address + size - 1) > QSPI_END_ADDRESS)
   {
-    printf("address 0x%x > 0x1fffff\n", (address + size));
     return HAL_ERROR;
   }
   
@@ -529,7 +523,7 @@ int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
       {
         block_size = block_size_max;
       }
-// printf("block_size %d num_bytes %d\n", block_size, num_bytes);
+
       /* Read by 128 Bytes block */
       if (QSPI_Read(hqspi, qspi_addr, (uint8_t*)flash_addr, block_size) != HAL_OK)
       {
