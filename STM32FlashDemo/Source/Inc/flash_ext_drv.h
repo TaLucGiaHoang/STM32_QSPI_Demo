@@ -16,9 +16,6 @@
 #include "flash_drv.h"
 
 /* Exported macro ------------------------------------------------------------*/
-// #define FLASH_BASE_ADDR      (uint32_t)(0x08000000)
-// #define FLASH_END_ADDR       (uint32_t)(0x081FFFFF)
-// #define FLASH_ALL_SIZE       (uint32_t)(FLASH_END_ADDR - FLASH_BASE_ADDR + 1)
 
 /* Definition for client expand memory area */
 #define NUM_AREA (2)
@@ -73,10 +70,10 @@ enum {
 // #define QSPI_DMA_IRQ               DMA2_Stream7_IRQn
 // #define QSPI_DMA_IRQ_HANDLER       DMA2_Stream7_IRQHandler
 
-/* MT25TL01GHBA8ESF Micron memory */
-/* Size of the flash */
-#define QSPI_FLASH_SIZE                      22
-#define QSPI_PAGE_SIZE                       256
+// /* MT25TL01GHBA8ESF Micron memory */
+// /* Size of the flash */
+// #define QSPI_FLASH_SIZE                      22
+// #define QSPI_PAGE_SIZE                       256
 
 /* Reset Operations */
 #define RESET_ENABLE_CMD                     0x66
@@ -180,8 +177,8 @@ enum {
 #define DUMMY_CLOCK_CYCLES_READ_DTR          6
 #define DUMMY_CLOCK_CYCLES_READ_QUAD_DTR     8
 
-/* End address of the QSPI memory */
-#define QSPI_END_ADDR              (1 << QSPI_FLASH_SIZE)
+// /* End address of the QSPI memory */
+// #define QSPI_END_ADDR              (1 << QSPI_FLASH_SIZE)
 
 /* Size of buffers */
 #define BUFFERSIZE                 (COUNTOF(aTxBuffer) - 1)
@@ -228,11 +225,11 @@ enum {
 #define EXTROM_FLASH_ADDR_MASK     (EXTROM_FLASH_SIZE-1)  // [0x000000-0x3fffff]
 
 /* External area size */
-#define EXTROM_AREA_SIZE_2MB       0x200000
+#define EXTROM_AREA_SIZE          (0x200000)
 
 
 #define QSPI_START_ADDRESS        (EXTROM_FLASH_ADDR_MASK & EXTROM_START_ADDRESS)
-#define QSPI_END_ADDRESS          (EXTROM_END_ADDRESS & EXTROM_START_ADDRESS)
+#define QSPI_END_ADDRESS          (EXTROM_FLASH_ADDR_MASK & EXTROM_END_ADDRESS)
 /* Exported macro ------------------------------------------------------------*/
 #define COUNTOF(__BUFFER__)        (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 

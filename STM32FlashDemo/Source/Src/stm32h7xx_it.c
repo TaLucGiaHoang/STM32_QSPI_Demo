@@ -56,10 +56,10 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern QSPI_HandleTypeDef hqspi;
+// extern UART_HandleTypeDef hqspi;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
-
+extern QSPI_HandleTypeDef QSPIHandle;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -220,9 +220,9 @@ void QUADSPI_IRQHandler(void)
   /* USER CODE BEGIN QUADSPI_IRQn 0 */
 
   /* USER CODE END QUADSPI_IRQn 0 */
-  HAL_QSPI_IRQHandler(&hqspi);
+  // HAL_QSPI_IRQHandler(&hqspi);
   /* USER CODE BEGIN QUADSPI_IRQn 1 */
-
+  HAL_QSPI_IRQHandler(&QSPIHandle);
   /* USER CODE END QUADSPI_IRQn 1 */
 }
 

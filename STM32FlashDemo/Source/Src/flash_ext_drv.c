@@ -17,12 +17,16 @@
 
 
 #define EXTROM_ERASE_SECTOR_SIZE_4KB      0x1000
-#define EXTROM_ERASE_BLOCK_SIZE_64KB      0x10000
-#define EXTROM_WRITE_BLOCK_SIZE_256BYTE   0x100 //32
-#define EXTROM_READ_BLOCK_SIZE_128BYTE      128
-#define EXTROM_READ_BLOCK_SIZE_64KB      64*1024//0x10000
+// #define EXTROM_ERASE_BLOCK_SIZE_64KB      0x10000
+#define EXTROM_WRITE_BLOCK_SIZE_256BYTE   0x100
+#define EXTROM_READ_BLOCK_SIZE_64KB      0x10000
 
-
+// #define DEBUG
+#if defined(DEBUG)
+ #define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
+#else
+ #define DEBUG_PRINT(fmt, args...)
+#endif
 /* Private macro -------------------------------------------------------------*/
 
 
@@ -194,9 +198,11 @@ static HAL_StatusTypeDef QSPI_Erase(QSPI_HandleTypeDef *hqspi, __IO uint32_t add
   HAL_StatusTypeDef status = HAL_ERROR;
   QSPI_CommandTypeDef      sCommand;
 
+  address &= EXTROM_FLASH_ADDR_MASK;
+  
   /* Check range of QSPI address */
-  if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS)  // [0x000000:0x3FFFFF]
-  {
+  // if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS)  // [0x000000:0x3FFFFF]
+  // {
     sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
@@ -218,10 +224,10 @@ static HAL_StatusTypeDef QSPI_Erase(QSPI_HandleTypeDef *hqspi, __IO uint32_t add
     {
       return status;
     }
-  } else
-  {
-    return HAL_ERROR;
-  }
+  // } else
+  // {
+    // return HAL_ERROR;
+  // }
 
   return HAL_OK;
 }
@@ -238,20 +244,19 @@ static HAL_StatusTypeDef QSPI_Write(QSPI_HandleTypeDef *hqspi, __IO uint32_t add
   HAL_StatusTypeDef status = HAL_OK;// HAL_ERROR;
  
   QSPI_CommandTypeDef      sCommand;
-  const uint32_t block_size = EXTROM_WRITE_BLOCK_SIZE_256BYTE;
 
-  if(size > block_size)
+  if(size > EXTROM_WRITE_BLOCK_SIZE_256BYTE)
   {
     return HAL_ERROR;
   }
   
   address &= EXTROM_FLASH_ADDR_MASK;
-  if((address + size - 1) > QSPI_END_ADDRESS)
+  if((address + size - 1) > EXTROM_FLASH_ADDR_MASK)
   {
     return HAL_ERROR;
   }
   
-  if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS) 
+  // if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS) 
   {
     sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -302,10 +307,10 @@ static HAL_StatusTypeDef QSPI_Write(QSPI_HandleTypeDef *hqspi, __IO uint32_t add
   */
 static HAL_StatusTypeDef QSPI_Read(QSPI_HandleTypeDef *hqspi, __IO uint32_t address, uint8_t *pData, uint32_t size)
 {
-  HAL_StatusTypeDef status = HAL_OK;// HAL_ERROR;
+  HAL_StatusTypeDef status = HAL_OK;
  
   QSPI_CommandTypeDef      sCommand;
-  const uint32_t block_size = 256; //EXTROM_READ_BLOCK_SIZE_128BYTE;
+  const uint32_t block_size = 256;
 
   if(size > block_size)
   {
@@ -318,7 +323,7 @@ static HAL_StatusTypeDef QSPI_Read(QSPI_HandleTypeDef *hqspi, __IO uint32_t addr
     return HAL_ERROR;
   }
   
-  if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS) 
+  // if(address >= QSPI_START_ADDRESS && address <= QSPI_END_ADDRESS) 
   {
     sCommand.InstructionMode   = QSPI_INSTRUCTION_1_LINE;
     sCommand.AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -412,6 +417,11 @@ int32_t EXTROM_Erase(__IO uint32_t start, uint32_t num_bytes)
     return FLASH_ERR_PARAM;
   }
   
+  // if(start >= EXTROM_START_ADDRESS && (start + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  // {
+    // return FLASH_ERR_PARAM;
+  // }
+  
   while (start <= end) {
     /* Erase by 4KB sector */
     if (QSPI_Erase(&QSPIHandle, start) != HAL_OK)
@@ -442,10 +452,15 @@ int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
   uint32_t count;
   QSPI_HandleTypeDef *hqspi = &QSPIHandle;
   
-  if(num_bytes > EXTROM_FLASH_SIZE)  // ROM max size
+  if(num_bytes > EXTROM_FLASH_SIZE)
   {
     return FLASH_ERR_PARAM;
   }
+  
+  // if(dst >= EXTROM_START_ADDRESS && (dst + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  // {
+    // return FLASH_ERR_PARAM;
+  // }
   
   dst &= EXTROM_FLASH_ADDR_MASK;
   
@@ -495,7 +510,7 @@ int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
 int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
 {
   __IO uint32_t qspi_addr, flash_addr;
-  const uint32_t block_size_max = 256;//128; // EXTROM_READ_BLOCK_SIZE_128BYTE
+  const uint32_t block_size_max = 256;
   uint32_t block_size;
   int32_t count;
   QSPI_HandleTypeDef *hqspi = &QSPIHandle;
@@ -505,11 +520,19 @@ int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes)
     return FLASH_ERR_PARAM;
   }
   
-  src &= EXTROM_FLASH_ADDR_MASK;
+  if(num_bytes > EXTROM_FLASH_SIZE)
+  {
+    return FLASH_ERR_PARAM;
+  }
+  
   // if(src >= EXTROM_START_ADDRESS && (src + num_bytes - 1) <= EXTROM_END_ADDRESS)
+  // {
+    // return FLASH_ERR_PARAM;
+  // }
+  
+  src &= EXTROM_FLASH_ADDR_MASK;
   if((src + num_bytes - 1) < EXTROM_FLASH_SIZE)
   {  
-    // src &= EXTROM_FLASH_ADDR_MASK;
     count = num_bytes;
     flash_addr = dst;
     qspi_addr = src;

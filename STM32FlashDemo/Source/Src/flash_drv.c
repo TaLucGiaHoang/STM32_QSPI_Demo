@@ -8,18 +8,25 @@
   
 /* Includes ------------------------------------------------------------------*/
 #include "flash_drv.h"
+#include <string.h>
+#include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define ROM_START_ADDRESS            0x08100000 // 0x08050000 //0x08100000// 0x08000000
+// #define ROM_START_ADDRESS            0x08100000
 // #define ROM_END_ADDRESS              0x081FFFFF
 // #define ROM_FLASH_SIZE_2MB           0x200000
 
-#define ROM_ERASE_BLOCK_SIZE_128KB   0x20000
-#define ROM_WRITE_BLOCK_SIZE_32BYTE  32
-#define ROM_READ_BLOCK_SIZE_4BYTE    4
-#define RAM_START_ADDRESS          0x20000000
+// #define ROM_ERASE_BLOCK_SIZE_128KB   0x20000
+// #define ROM_WRITE_BLOCK_SIZE_32BYTE  32
+// #define ROM_READ_BLOCK_SIZE_4BYTE    4
 
+// #define DEBUG
+#if defined(DEBUG)
+ #define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
+#else
+ #define DEBUG_PRINT(fmt, args...)
+#endif
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -38,35 +45,35 @@ static FLASH_EraseInitTypeDef EraseInitStruct;
 void Flash_Print_Error(void)
 {
   uint32_t ercd = HAL_FLASH_GetError();
-  if(ercd == HAL_FLASH_ERROR_NONE)         printf("No error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP)          printf("Write Protection Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS)          printf("Program Sequence Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB)         printf("Strobe Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC)          printf("Inconsistency Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE)          printf("Operation Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP)          printf("Read Protection Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS)          printf("Read Secured Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC)        printf("Single Detection ECC (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC)        printf("Double Detection ECC (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP_BANK1)    printf("Write Protection Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS_BANK1)    printf("Program Sequence Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB_BANK1)   printf("Strobe Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC_BANK1)    printf("Inconsistency Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE_BANK1)    printf("Operation Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP_BANK1)    printf("Read Protection Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS_BANK1)    printf("Read Secured Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC_BANK1)  printf("Single Detection ECC on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC_BANK1)  printf("Double Detection ECC on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP_BANK2)    printf("Write Protection Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS_BANK2)    printf("Program Sequence Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB_BANK2)   printf("Strobe Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC_BANK2)    printf("Inconsistency Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE_BANK2)    printf("Operation Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP_BANK2)    printf("Read Protection Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS_BANK2)    printf("Read Secured Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC_BANK2)  printf("Single Detection ECC on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC_BANK2)  printf("Double Detection ECC on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OB_CHANGE)    printf("Option Byte Change Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_NONE)         DEBUG_PRINT("[FLASH] No error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_WRP)          DEBUG_PRINT("[FLASH] Write Protection Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_PGS)          DEBUG_PRINT("[FLASH] Program Sequence Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_STRB)         DEBUG_PRINT("[FLASH] Strobe Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_INC)          DEBUG_PRINT("[FLASH] Inconsistency Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_OPE)          DEBUG_PRINT("[FLASH] Operation Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDP)          DEBUG_PRINT("[FLASH] Read Protection Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDS)          DEBUG_PRINT("[FLASH] Read Secured Error (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_SNECC)        DEBUG_PRINT("[FLASH] Single Detection ECC (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_DBECC)        DEBUG_PRINT("[FLASH] Double Detection ECC (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_WRP_BANK1)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_PGS_BANK1)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_STRB_BANK1)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_INC_BANK1)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_OPE_BANK1)    DEBUG_PRINT("[FLASH] Operation Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDP_BANK1)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDS_BANK1)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_SNECC_BANK1)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_DBECC_BANK1)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 1 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_WRP_BANK2)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_PGS_BANK2)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_STRB_BANK2)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_INC_BANK2)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_OPE_BANK2)    DEBUG_PRINT("[FLASH] Operation Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDP_BANK2)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_RDS_BANK2)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_SNECC_BANK2)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_DBECC_BANK2)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 2 (0x%08x)\n", ercd);
+  if(ercd == HAL_FLASH_ERROR_OB_CHANGE)    DEBUG_PRINT("[FLASH] Option Byte Change Error (0x%08x)\n", ercd);
 }
 
 /**
@@ -123,7 +130,6 @@ uint32_t GetSector(uint32_t Address)
     sector = FLASH_SECTOR_7;
   }
 
-  // printf("sector %d\n", sector);
   return sector;
 }
 
@@ -200,91 +206,8 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
     return FLASH_ERR_FATAL;
   }
  
-  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
+  DEBUG_PRINT("[FLASH] Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector %d, NbSectors %d\n", start, end, num_bytes, FirstSector, NbOfSectors);
   HAL_FLASH_Unlock();
-  if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
-  {
-    /*
-      Error occurred while sector erase.
-      User can add here some code to deal with this error.
-      SECTORError will contain the faulty sector and then to know the code error on this sector,
-      user can call function 'HAL_FLASH_GetError()'
-    */
-    ret = FLASH_ERR_FATAL;
-  }
-  HAL_FLASH_Lock();
-
-  return ret;
-}
-
-/* Test only */
-/* Bank1 */
-#define FLASH_USER_START_ADDR_1   ADDR_FLASH_SECTOR_2_BANK1      /* Start @ of user Flash area Bank1 */
-#define FLASH_USER_END_ADDR_1     (ADDR_FLASH_SECTOR_0_BANK2 - 1) //(ADDR_FLASH_SECTOR_7_BANK1 - 1)  /* End @ of user Flash area Bank1*/
-/* Bank2 */
-#define FLASH_USER_START_ADDR_2   ADDR_FLASH_SECTOR_0_BANK2
-#define FLASH_USER_END_ADDR_2     0x081FFFFF // ADDR_FLASH_SECTOR_7_BANK2 //(0x081FFFFF)  /* End @ of user 
-
-int32_t FLASH_Erase_1(uint32_t start, uint32_t num_bytes)
-{
-  uint32_t FirstSector = 0, NbOfSectors = 0;
-  uint32_t Banks;
-  uint32_t Address = 0, SECTORError = 0;
-  uint32_t end = start + num_bytes - 1;
-  int32_t  ret = FLASH_ERR_OK;
-
-  HAL_FLASH_Unlock();
-  /* Get the 1st sector to erase */
-  FirstSector = GetSector(start);
-  /* Get the number of sector to erase from 1st sector*/
-  NbOfSectors = GetSector(end) - FirstSector + 1;
-
-  /* Fill EraseInit structure*/
-  EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-  EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
-  EraseInitStruct.Banks         = FLASH_BANK_1;
-  EraseInitStruct.Sector        = FirstSector;
-  EraseInitStruct.NbSectors     = NbOfSectors;
-  
-  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
-  if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
-  {
-    /*
-      Error occurred while sector erase.
-      User can add here some code to deal with this error.
-      SECTORError will contain the faulty sector and then to know the code error on this sector,
-      user can call function 'HAL_FLASH_GetError()'
-    */
-    ret = FLASH_ERR_FATAL;
-  }
-  HAL_FLASH_Lock();
-
-  return ret;
-}
-
-
-int32_t FLASH_Erase_2(uint32_t start, uint32_t num_bytes)
-{
-  uint32_t FirstSector = 0, NbOfSectors = 0;
-  uint32_t Banks;
-  uint32_t Address = 0, SECTORError = 0;
-  uint32_t end = start + num_bytes - 1;
-  int32_t  ret = FLASH_ERR_OK;
-
-  HAL_FLASH_Unlock();
-  /* Get the 1st sector to erase */
-  FirstSector = GetSector(start);
-  /* Get the number of sector to erase from 1st sector*/
-  NbOfSectors = GetSector(end) - FirstSector + 1;
-
-  /* Fill EraseInit structure*/
-  EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
-  EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
-  EraseInitStruct.Banks         = FLASH_BANK_2;
-  EraseInitStruct.Sector        = FirstSector;
-  EraseInitStruct.NbSectors     = NbOfSectors;
-  
-  printf("Flash erase [0x%08x:0x%08x] (0x%x bytes) Sector%d NbOfSectors%d\n", start, end, num_bytes, FirstSector, NbOfSectors);
   if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK)
   {
     /*
@@ -382,7 +305,7 @@ int32_t FLASH_Write(uint32_t src, uint32_t dst, uint32_t num_bytes)
   count = num_bytes;
   
   HAL_FLASH_Unlock();
-  // printf("Flash Write 0x%08x : 0x%08x (%d)\n", FlashAddress, end_addr, num_bytes);
+
   while (count > 0)
   {
     if(count < block_size_max)

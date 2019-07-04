@@ -13,7 +13,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_nucleo_144.h"
-
 /* Exported macro ------------------------------------------------------------*/
 #define FLASH_BASE_ADDR      (uint32_t)(0x08000000) // FLASH_BASE 
 #define FLASH_END_ADDR       (uint32_t)(0x081FFFFF)
@@ -58,8 +57,6 @@ typedef enum {
 /* Functions */
 int32_t FLASH_Init(void);   // Initialize the internal flash access module
 int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes);       // Erase the built-in flash memory
-int32_t FLASH_Erase_1(uint32_t start, uint32_t num_bytes);
-int32_t FLASH_Erase_2(uint32_t start, uint32_t num_bytes);
 int32_t FLASH_Read(uint32_t src, uint32_t dst, uint32_t num_bytes);    // Read data from internal flash memory
 int32_t FLASH_Write(uint32_t src, uint32_t dst, uint32_t num_bytes);    // Write data to internal flash memory
 
