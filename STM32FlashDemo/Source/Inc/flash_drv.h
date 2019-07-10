@@ -13,16 +13,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_nucleo_144.h"
+
 /* Exported macro ------------------------------------------------------------*/
-#define FLASH_BASE_ADDR      (uint32_t)(0x08000000) // FLASH_BASE 
-#define FLASH_END_ADDR       (uint32_t)(0x081FFFFF)
-#define FLASH_ALL_SIZE       (uint32_t)(FLASH_END_ADDR - FLASH_BASE_ADDR + 1)
-// /* "stm32h743xx.h"
-// * #define FLASH_BANK1_BASE          ((uint32_t)0x08000000) /*!< Base address of : (up to 1 MB) Flash Bank1 accessible over AXI                          */ 
-// * #define FLASH_BANK2_BASE          ((uint32_t)0x08100000) /*!< Base address of : (up to 1 MB) Flash Bank2 accessible over AXI                          */ 
-// * #define FLASH_END                 ((uint32_t)0x081FFFFF) /*!< FLASH end address                                                                       */
-// * #define FLASH_BASE                FLASH_BANK1_BASE
-// */
+#define FLASH_BASE_ADDR      FLASH_BASE
+#define FLASH_END_ADDR       FLASH_END
+
 /* Base address of the Flash sectors Bank 1 */
 #define ADDR_FLASH_SECTOR_0_BANK1     ((uint32_t)0x08000000) /* Base @ of Sector 0, 128 Kbytes */
 #define ADDR_FLASH_SECTOR_1_BANK1     ((uint32_t)0x08020000) /* Base @ of Sector 1, 128 Kbytes */
@@ -59,10 +54,4 @@ int32_t FLASH_Init(void);   // Initialize the internal flash access module
 int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes);       // Erase the built-in flash memory
 int32_t FLASH_Read(uint32_t src, uint32_t dst, uint32_t num_bytes);    // Read data from internal flash memory
 int32_t FLASH_Write(uint32_t src, uint32_t dst, uint32_t num_bytes);    // Write data to internal flash memory
-
-void Flash_Print_Error(void);
-uint32_t GetSector(uint32_t Address);
-
-/* Callback functions */
-
 #endif /*__FLASH_DRV_H */

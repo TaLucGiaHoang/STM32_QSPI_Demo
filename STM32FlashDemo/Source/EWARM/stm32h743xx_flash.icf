@@ -6,8 +6,8 @@ define symbol __ICFEDIT_intvec_start__ = 0x08000000;
 /*-Memory Regions-*/
 define symbol __ICFEDIT_region_ROM_start__     = 0x08000000;
 define symbol __ICFEDIT_region_ROM_end__       = 0x081FFFFF;
-define symbol __ICFEDIT_region_RAM_start__     = 0x20000000;
-define symbol __ICFEDIT_region_RAM_end__       = 0x2001FFFF;
+define symbol __ICFEDIT_region_RAM_start__     = 0x24000000;
+define symbol __ICFEDIT_region_RAM_end__       = 0x2407FFFF;
 define symbol __ICFEDIT_region_ITCMRAM_start__ = 0x00000000;
 define symbol __ICFEDIT_region_ITCMRAM_end__   = 0x0000FFFF;
 /*-Sizes-*/
@@ -15,20 +15,106 @@ define symbol __ICFEDIT_size_cstack__ = 0x400;
 define symbol __ICFEDIT_size_heap__ = 0x200;
 /**** End of ICF editor section. ###ICF###*/
 
+define symbol __region_SYS_start__     = 0x08000000;
+define symbol __region_SYS_end__       = 0x0801FFFF;
+define symbol __region_FW_start__      = 0x08020000;
+define symbol __region_FW_end__        = 0x081FFFFF;
 
 define memory mem with size = 4G;
 define region ROM_region      = mem:[from __ICFEDIT_region_ROM_start__   to __ICFEDIT_region_ROM_end__];
 define region RAM_region      = mem:[from __ICFEDIT_region_RAM_start__   to __ICFEDIT_region_RAM_end__];
 define region ITCMRAM_region  = mem:[from __ICFEDIT_region_ITCMRAM_start__ to __ICFEDIT_region_ITCMRAM_end__];
 
+define region SYS_region      = mem:[from __region_SYS_start__   to __region_SYS_end__];
+define region FW_region       = mem:[from __region_FW_start__    to __region_FW_end__];
+
 define block CSTACK    with alignment = 8, size = __ICFEDIT_size_cstack__   { };
 define block HEAP      with alignment = 8, size = __ICFEDIT_size_heap__     { };
 
+define block .system with fixed order {
+  ro object dl7M_tlf.a,
+  ro object m7M_tlv.a,
+  ro object rt7M_tl.a,
+  ro object shb_l.a,
+  ro code section .text object startup_stm32h743xx.o,
+};
+
+define block .FWFIXED with fixed order {
+  ro data section .iar.init_table,
+  ro object system_stm32h7xx.o,
+};
+
+define block .FWUPDATE with fixed order {
+  ro object main.o,
+  ro object stm32h7xx_hal_cortex.o,
+  ro object stm32h7xx_hal_msp.o,
+  ro object stm32h7xx_hal_rcc.o,
+  ro object stm32h7xx_hal_uart.o,
+};
+
+define block .ramobj_init {
+  ro section *_init object fw_update_api.o,
+  ro section *_init object flash_drv.o,
+  ro section *_init object flash_ext_drv.o,
+  ro section *_init object stm32h7xx_hal_flash.o,
+  ro section *_init object stm32h7xx_hal_flash_ex.o,
+  ro section *_init object stm32h7xx_hal_qspi.o,
+  ro section *_init object stm32h7xx_it.o,
+  ro section *_init object stm32h7xx_hal.o,
+  ro section *_init object stm32h7xx_nucleo_144.o,
+  ro section *_init object stm32h7xx_hal_gpio.o,
+};
+
+define block .ramobj {
+  rw object fw_update_api.o,
+  rw object flash_drv.o,
+  rw object flash_ext_drv.o,
+  rw object stm32h7xx_hal_flash.o,
+  rw object stm32h7xx_hal_flash_ex.o,
+  rw object stm32h7xx_hal_qspi.o,
+  rw object stm32h7xx_it.o,
+  rw object stm32h7xx_hal.o,
+  rw object stm32h7xx_nucleo_144.o,
+  rw object stm32h7xx_hal_gpio.o,
+};
+
+define block FW_FIXED_ORDER with fixed order {
+  block .FWFIXED,
+  block .FWUPDATE,
+  section .ramfunc_init,
+  block .ramobj_init,
+  section .dummy,
+};
+
 initialize by copy { readwrite };
+initialize manually with packing = none
+{
+  ro object fw_update_api.o,
+  rw object fw_update_api.o,
+  ro object flash_drv.o,
+  rw object flash_drv.o,
+  ro object flash_ext_drv.o,
+  rw object flash_ext_drv.o,
+  ro object stm32h7xx_hal_flash.o,
+  rw object stm32h7xx_hal_flash.o,
+  ro object stm32h7xx_hal_flash_ex.o,
+  rw object stm32h7xx_hal_flash_ex.o,
+  ro object stm32h7xx_hal_qspi.o,
+  rw object stm32h7xx_hal_qspi.o,
+  ro object stm32h7xx_it.o,
+  rw object stm32h7xx_it.o,
+  ro object stm32h7xx_hal.o,
+  rw object stm32h7xx_hal.o,
+  ro object stm32h7xx_nucleo_144.o,
+  rw object stm32h7xx_nucleo_144.o,
+  ro object stm32h7xx_hal_gpio.o,
+  rw object stm32h7xx_hal_gpio.o,
+};
+initialize manually with packing = none { section .ramfunc };
 do not initialize  { section .noinit };
 
 place at address mem:__ICFEDIT_intvec_start__ { readonly section .intvec };
-
-place in ROM_region   { readonly };
-place in RAM_region   { readwrite,
+place in SYS_region   { block .system };
+place in FW_region    { readonly, first block FW_FIXED_ORDER };
+place in RAM_region   { block .ramobj, section .ramfunc, readwrite,
                         block CSTACK, block HEAP };

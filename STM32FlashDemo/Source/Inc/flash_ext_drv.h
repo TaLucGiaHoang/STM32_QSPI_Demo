@@ -21,59 +21,13 @@
 #define NUM_AREA (2)
 
 /* Exported types ------------------------------------------------------------*/
-enum {
-#if (NUM_AREA >= (1))
-  AREA_1,
-#endif
-#if (NUM_AREA >= (2))
-  AREA_2,
-#endif
-// #if (NUM_AREA >= (4))
-  // AREA_3,
-  // AREA_4,
-// #endif
-  AREA_NUM,
-};
 
 /* Exported constants --------------------------------------------------------*/
-// /* Definition for QSPI clock resources */
-// #define QSPI_CLK_ENABLE()          __HAL_RCC_QSPI_CLK_ENABLE()
-// #define QSPI_CLK_DISABLE()         __HAL_RCC_QSPI_CLK_DISABLE()
-// #define QSPI_CS_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOB_CLK_ENABLE()
-// #define QSPI_CLK_GPIO_CLK_ENABLE() __HAL_RCC_GPIOB_CLK_ENABLE()
-// #define QSPI_D0_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOD_CLK_ENABLE()
-// #define QSPI_D1_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOD_CLK_ENABLE()
-// #define QSPI_D2_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOE_CLK_ENABLE()
-// #define QSPI_D3_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOD_CLK_ENABLE()
-// #define QSPI_MDMA_CLK_ENABLE()      __HAL_RCC_MDMA_CLK_ENABLE()
 
-// #define QSPI_FORCE_RESET()         __HAL_RCC_QSPI_FORCE_RESET()
-// #define QSPI_RELEASE_RESET()       __HAL_RCC_QSPI_RELEASE_RESET()
-
-// /* Definition for QSPI Pins */
-// #define QSPI_CS_PIN                GPIO_PIN_6
-// #define QSPI_CS_GPIO_PORT          GPIOB
-// #define QSPI_CLK_PIN               GPIO_PIN_2
-// #define QSPI_CLK_GPIO_PORT         GPIOB
-// #define QSPI_D0_PIN                GPIO_PIN_11
-// #define QSPI_D0_GPIO_PORT          GPIOD
-// #define QSPI_D1_PIN                GPIO_PIN_12
-// #define QSPI_D1_GPIO_PORT          GPIOD
-// #define QSPI_D2_PIN                GPIO_PIN_2
-// #define QSPI_D2_GPIO_PORT          GPIOE
-// #define QSPI_D3_PIN                GPIO_PIN_13
-// #define QSPI_D3_GPIO_PORT          GPIOD
-
-// /* Definition for QSPI DMA */
-// #define QSPI_DMA_INSTANCE          DMA2_Stream7
-// #define QSPI_DMA_REQUEST           $QSPI_DMA_REQUEST$
-// #define QSPI_DMA_IRQ               DMA2_Stream7_IRQn
-// #define QSPI_DMA_IRQ_HANDLER       DMA2_Stream7_IRQHandler
-
-// /* MT25TL01GHBA8ESF Micron memory */
-// /* Size of the flash */
-// #define QSPI_FLASH_SIZE                      22
-// #define QSPI_PAGE_SIZE                       256
+/* MT25TL01GHBA8ESF Micron memory */
+/* Size of the flash */
+#define QSPI_FLASH_SIZE                      22  // 1<<22 ~ 4MB
+#define QSPI_PAGE_SIZE                       256
 
 /* Reset Operations */
 #define RESET_ENABLE_CMD                     0x66
@@ -176,71 +130,13 @@ enum {
 
 #define DUMMY_CLOCK_CYCLES_READ_DTR          6
 #define DUMMY_CLOCK_CYCLES_READ_QUAD_DTR     8
-
-// /* End address of the QSPI memory */
-// #define QSPI_END_ADDR              (1 << QSPI_FLASH_SIZE)
-
-/* Size of buffers */
-#define BUFFERSIZE                 (COUNTOF(aTxBuffer) - 1)
-
-
-/* QSPI FLASH AREA */
-#if (NUM_AREA == (1))
-#define EXTROM_START_ADDRESS         0x90000000
-#define EXTROM_END_ADDRESS           0x901FFFFF
-#elif (NUM_AREA == (2))
-#define EXTROM_START_ADDRESS         0x90000000
-#define EXTROM_END_ADDRESS           0x903FFFFF
-// #else if (NUM_AREA == (4))
-// #define EXTROM_START_ADDRESS         0x90000000
-// #define EXTROM_END_ADDRESS           0x907FFFFF
-#endif
-
-#define EXTROM_FLASH_SIZE_2MB        0x200000
-#define EXTROM_FLASH_SIZE_4MB        0x400000
-#define EXTROM_FLASH_SIZE_8MB        0x800000
-
-
-/* External Flash size */
-#if (NUM_AREA == (1))
-#define EXTROM_FLASH_SIZE          (EXTROM_FLASH_SIZE_2MB)
-#elif (NUM_AREA == (2))
-#define EXTROM_FLASH_SIZE          (EXTROM_FLASH_SIZE_4MB)
-// #else if (NUM_AREA == (4))
-// #define EXTROM_FLASH_SIZE          (EXTROM_FLASH_SIZE_8MB)
-#endif
-
-#if (NUM_AREA >= (1))
-#define EXTROM_AREA_1_ADDRESS      0x90000000
-#endif
-#if (NUM_AREA >= (2))
-#define EXTROM_AREA_2_ADDRESS      0x90200000
-#endif
-// #if (NUM_AREA >= (4))
-// #define EXTROM_AREA_3_ADDRESS      0x90400000  // Reserved
-// #define EXTROM_AREA_4_ADDRESS      0x90600000  // Reserved
-// #endif
-
-
-#define EXTROM_FLASH_ADDR_MASK     (EXTROM_FLASH_SIZE-1)  // [0x000000-0x3fffff]
-
-/* External area size */
-#define EXTROM_AREA_SIZE          (0x200000)
-
-
-#define QSPI_START_ADDRESS        (EXTROM_FLASH_ADDR_MASK & EXTROM_START_ADDRESS)
-#define QSPI_END_ADDRESS          (EXTROM_FLASH_ADDR_MASK & EXTROM_END_ADDRESS)
 /* Exported macro ------------------------------------------------------------*/
-#define COUNTOF(__BUFFER__)        (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 
 /* Exported functions ------------------------------------------------------- */
 int32_t EXTROM_Init(void);   // Initialize the QSPI flash access module
-int32_t EXTROM_Erase(__IO uint32_t start, uint32_t num_bytes);      // Erase the QSPI flash memory
-int32_t EXTROM_Read(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes);    // Read data from QSPI flash memory
-int32_t EXTROM_Write(__IO uint32_t src, __IO uint32_t dst, uint32_t num_bytes);   // Write data to QSPI flash memory
-
-void QSPI_Memmap();
-
-/* Callback functions */
+int32_t EXTROM_Erase(uint32_t start, uint32_t num_bytes);      // Erase the QSPI flash memory
+int32_t EXTROM_Read(uint32_t src, uint32_t dst, uint32_t num_bytes);    // Read data from QSPI flash memory
+int32_t EXTROM_Write(uint32_t src, uint32_t dst, uint32_t num_bytes);   // Write data to QSPI flash memory
+void EXTROM_Memmap();
 
 #endif /*__FLASH_EXT_DRV_H */

@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stm32h7xx_nucleo_144.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

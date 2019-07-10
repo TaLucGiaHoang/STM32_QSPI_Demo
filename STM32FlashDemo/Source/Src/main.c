@@ -25,60 +25,38 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
-#include "stm32h7xx_nucleo_144.h"
 #include "fw_update_api.h"
-//#include "flash_ext_drv.h"
+#include "dummy.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum {
-  CMD_NONE = 0,
-  CMD_UPDATE,
-  CMD_FW_INFO,
-  CMD_FW_DATA,
-  CMD_NOTIFY,
-  CMD_RESET,
-  CMD_DUMMY
-} cmd_t;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define FW_DATA_PACKAGE_SIZE 512 // Package size sent via UART (bytes)
-#define FW_START_ADDR 0x08020000 // 128KB Start address of Firmware in FLASH
-#define UART_BUFFER_SIZE 1024 // (bytes)
+#define FW_START_ADDR 0x08020000 // Start address of Firmware in FLASH (128KB)
 
-#define RESPONSE_OK "OK"
-#define RESPONSE_NG "NG"
+/* USER CODE END PD */
 
-// #define DEBUG
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
 #if defined(DEBUG)
  #define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
 #else
  #define DEBUG_PRINT(fmt, args...)
 #endif
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
-// QSPI_HandleTypeDef hqspi;
+QSPI_HandleTypeDef hqspi;
 
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-extern QSPI_HandleTypeDef QSPIHandle;
-
 uint8_t cmd_received;
-uint8_t cmd_buffer[UART_BUFFER_SIZE];
-uint32_t firmware_size;
-uint8_t firmware_checksum;
-uint8_t firmware_data_buffer[FW_DOWNLOAD_BUFFER_SIZE];
 int16_t current_qspi_buffer_index;
 int16_t next_qspi_buffer_index;
 fw_header_t current_firmware_info;
@@ -88,11 +66,10 @@ fw_header_t current_firmware_info;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
-// static void MX_QUADSPI_Init(void);
+//static void MX_QUADSPI_Init(void);
 /* USER CODE BEGIN PFP */
-static void dummy_main(void);
-static void command_analyze(void);
-static uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum);
+void code_copy(void);
+void update_firmware(void) __attribute__ ((section (".ramfunc")));
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -104,11 +81,11 @@ static uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum
   * @brief  The application entry point.
   * @retval int
   */
-
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  // Copy object code from ROM to RAM for execution on RAM
+  code_copy();
   /* USER CODE END 1 */
   
 
@@ -133,67 +110,34 @@ int main(void)
   MX_USART3_UART_Init();
 //  MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
-  BSP_LED_Init(LED1);  // QSPI buffer is used for downloading, OFF: even buffer, ON: odd buffer
-  BSP_LED_Init(LED2);  // QSPI read/write
-  BSP_LED_Init(LED3);  // error
+  BSP_LED_Init(LED1);
+  BSP_LED_Init(LED2);
+  BSP_LED_Init(LED3);
   
   BSP_LED_Off(LED1);
   BSP_LED_Off(LED2);
   BSP_LED_Off(LED3);
   
   
-  // AT: DEBUG
-//  EXTROM_Init();
-//  QSPI_Memmap();
-//  while (1) {}
-  
-//  EXTROM_Init();
-//  EXTROM_Erase(0x90000000, 0x10000);
-//  
-//  uint8_t buffer[4] = {8, 7, 2, 6};
-//  EXTROM_Write((uint32_t)buffer, 0x90000000, 4);
-//
-//  uint8_t rbuffer[4];
-//  EXTROM_Read(0x90000000, (uint32_t)rbuffer, 4);
-//  
-//  for (int i = 0; i < 4; i++) {
-//    DEBUG_PRINT("%02x ", rbuffer[i]);
-//  }
-//  DEBUG_PRINT("\r\n");
-//  QSPI_Memmap();
-//  while (1) {}
-  
-  // TODO: Init
-//  FWUPDATE_InitFlash();
+  // Initilization
+  FWUPDATE_InitFlash();
   FWUPDATE_InitQSPI();
-//  FWUPDATE_Init();
+  FWUPDATE_Init();
   
-  // CHECK: Read QSPI flash buffer management table
+  // Read QSPI flash buffer management table
   // QSPI flash buffer index starts from 0, 1, 2, ...
   current_qspi_buffer_index = FWUPDATE_Get_Current_FW_Info(&current_firmware_info);
+  
   next_qspi_buffer_index = (current_qspi_buffer_index + 1) % FW_AREA_NUM;
 
   if (current_qspi_buffer_index < 0) {
     // QSPI flash memory does not have any data
     DEBUG_PRINT("QSPI flash memory does not have any data\r\n");
+    
+    dummy_main();
   } else {
-    DEBUG_PRINT("Update Firmware from QSPI buffer %d\r\n", current_qspi_buffer_index);
-
-    // TODO: execute on RAM
-   BSP_LED_On(LED2);
-   if(FWUPDATE_Update(current_qspi_buffer_index * FW_AREA_SIZE + sizeof(fw_header_t), FW_START_ADDR, current_firmware_info.size) != FWUPDATE_ERR_OK)
-   {
-     BSP_LED_On(LED3);
-     DEBUG_PRINT("Update error\r\n", current_qspi_buffer_index);
-   } else
-   {
-     DEBUG_PRINT("Update OK\r\n", current_qspi_buffer_index);
-   }
-   BSP_LED_Off(LED2);
+    update_firmware();
   }
-  
-  // TODO: Set dummy_main at fixed address and the function calling it must be in RAM.
-  dummy_main();
   
   /* USER CODE END 2 */
 
@@ -262,40 +206,40 @@ void SystemClock_Config(void)
   }
 }
 
-// /**
-  // * @brief QUADSPI Initialization Function
-  // * @param None
-  // * @retval None
-  // */
-// static void MX_QUADSPI_Init(void)
-// {
-
-  // /* USER CODE BEGIN QUADSPI_Init 0 */
-
-  // /* USER CODE END QUADSPI_Init 0 */
-
-  // /* USER CODE BEGIN QUADSPI_Init 1 */
-
-  // /* USER CODE END QUADSPI_Init 1 */
-  // /* QUADSPI parameter configuration*/
-  // hqspi.Instance = QUADSPI;
-  // hqspi.Init.ClockPrescaler = 2;
-  // hqspi.Init.FifoThreshold = 4;
-  // hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
-  // hqspi.Init.FlashSize = 22;
-  // hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_3_CYCLE;
-  // hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
-  // hqspi.Init.FlashID = QSPI_FLASH_ID_1;
-  // hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
-  // if (HAL_QSPI_Init(&hqspi) != HAL_OK)
-  // {
-    // Error_Handler();
-  // }
-  // /* USER CODE BEGIN QUADSPI_Init 2 */
-
-  // /* USER CODE END QUADSPI_Init 2 */
-
-// }
+///**
+//  * @brief QUADSPI Initialization Function
+//  * @param None
+//  * @retval None
+//  */
+//static void MX_QUADSPI_Init(void)
+//{
+//
+//  /* USER CODE BEGIN QUADSPI_Init 0 */
+//
+//  /* USER CODE END QUADSPI_Init 0 */
+//
+//  /* USER CODE BEGIN QUADSPI_Init 1 */
+//
+//  /* USER CODE END QUADSPI_Init 1 */
+//  /* QUADSPI parameter configuration*/
+//  hqspi.Instance = QUADSPI;
+//  hqspi.Init.ClockPrescaler = 2;
+//  hqspi.Init.FifoThreshold = 4;
+//  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+//  hqspi.Init.FlashSize = 22;
+//  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_3_CYCLE;
+//  hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
+//  hqspi.Init.FlashID = QSPI_FLASH_ID_1;
+//  hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+//  if (HAL_QSPI_Init(&hqspi) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+//  /* USER CODE BEGIN QUADSPI_Init 2 */
+//
+//  /* USER CODE END QUADSPI_Init 2 */
+//
+//}
 
 /**
   * @brief USART3 Initialization Function
@@ -361,239 +305,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-/**
-  * @brief  This is the Dummy Main function.
-  * @retval None
-  */
-void dummy_main(void)
-{
-  uint32_t start, end;
-  uint32_t elapsed_time; // in ms
- 
-  cmd_received = 0;
-  HAL_UART_Receive_IT(&huart3, cmd_buffer, 1);
-  
-  while (1) {
-    // Loop for 300ms
-    HAL_Delay(300);
-    
-    if (cmd_received) {
-      cmd_received = 0;
-      
-      // DEBUG
-      start = HAL_GetTick();
-      
-      // Command analyzer
-      command_analyze();
-      
-      // DEBUG
-      end = HAL_GetTick();
-      elapsed_time = end - start;
-      if (elapsed_time > 200) {
-//        DEBUG_PRINT("Command analyze time: %d ms\r\n", elapsed_time);
-        BSP_LED_On(LED3);
-      }
-    } else {
-      // Loop for 200ms
-      HAL_Delay(200);
-    }
-  }
-}
-
-/**
-  * @brief  This function analyzes the command from UART.
-  * @retval None
-  */
-void command_analyze(void)
-{
-  static cmd_t previous_cmd = CMD_NONE;
-  static uint32_t remain_data_size = 0;
-  cmd_t current_cmd = CMD_NONE;
-  uint32_t size;
-  static uint32_t firmware_data_buffer_len;
-  static uint32_t qspi_address = 0;
-  char buffer[32];
-  FWUPDATE_ERR_CODE ret;
-  
-  if (previous_cmd == CMD_UPDATE) {
-    current_cmd = CMD_FW_INFO;
-    // Get Firmware info
-    firmware_size = *(uint32_t*)&cmd_buffer[0];
-    firmware_checksum = cmd_buffer[4];
-    remain_data_size = firmware_size;
-    firmware_data_buffer_len = 0;
-    
-    // DEBUG
-    DEBUG_PRINT("Firmware_size: %d \r\nChecksum: %d\r\n", firmware_size, firmware_checksum);
-    
-    // Wait for Firmware data
-    if (remain_data_size < FW_DATA_PACKAGE_SIZE) {
-      size = remain_data_size;
-    } else {
-      size = FW_DATA_PACKAGE_SIZE;
-    }
-    HAL_UART_Receive_IT(&huart3, firmware_data_buffer, size);
-    remain_data_size -= size;
-    firmware_data_buffer_len += size;
-    
-    // CHECK: Calculate qspi_address based on next_qspi_buffer_index
-    qspi_address = next_qspi_buffer_index * FW_AREA_SIZE + 4096; //sizeof(fw_header_t);
-    
-    HAL_UART_Transmit(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1, 200);
-  } else if (previous_cmd == CMD_FW_INFO || previous_cmd == CMD_FW_DATA) {
-    if ((remain_data_size == 0) || (firmware_data_buffer_len >= FW_DOWNLOAD_BUFFER_SIZE)) {
-      // Write buffer to QSPI Flash
-      BSP_LED_On(LED2);
-      ret = FWUPDATE_Download(qspi_address, (uint32_t)firmware_data_buffer, firmware_data_buffer_len);
-      
-      if (ret != FWUPDATE_ERR_OK) {
-        HAL_UART_Transmit_IT(&huart3, RESPONSE_NG, sizeof(RESPONSE_NG) - 1);
-        
-        current_cmd = CMD_NONE;
-        previous_cmd = CMD_NONE;
-        BSP_LED_On(LED3);
-        return;
-      }
-      BSP_LED_Off(LED2);
-      // /* Calculate Checksum */
-      // for (uint32_t i = 0; i < firmware_data_buffer_len; i++) {
-        // firmware_checksum ^= firmware_data_buffer[i];
-      // }
-      
-      DEBUG_PRINT("Write %d bytes to QSPI at address 0x%08x\r\n", firmware_data_buffer_len, qspi_address);
-      
-      qspi_address += firmware_data_buffer_len;
-      firmware_data_buffer_len = 0;
-    }
-    
-    if (remain_data_size == 0) {
-      // Set current_cmd to CMD_NONE to wait for next command
-      current_cmd = CMD_NONE;
-      
-      // if (firmware_checksum == 0) 
-      {
-        // CHECK: Update firmware state in QSPI
-        fw_header_t fw_info;
-        fw_info.size = firmware_size;
-        fw_info.state = FWUPDATE_AREA_STATE_DOWNLOADED;
-        fw_info.version = (current_firmware_info.version + 1) & 0xFF;
-        
-        DEBUG_PRINT("New donwloaded firmware info: size %d, version %d\n", fw_info.size, fw_info.version);
-        FWUPDATE_Set_FW_Info(next_qspi_buffer_index, &fw_info);
-      }
-      
-      /* Wait for next command */
-      HAL_UART_Receive_IT(&huart3, cmd_buffer, 1);
-    } else {
-      /* Wait for next data buffer */
-      current_cmd = CMD_FW_DATA;
-      if (remain_data_size < FW_DATA_PACKAGE_SIZE) {
-        size = remain_data_size;
-      } else {
-        size = FW_DATA_PACKAGE_SIZE;
-      }
-      HAL_UART_Receive_IT(&huart3, &firmware_data_buffer[firmware_data_buffer_len], size);
-      remain_data_size -= size;
-      firmware_data_buffer_len += size;
-    }
-    
-    HAL_UART_Transmit(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1, 200);
-  } else {
-    switch (cmd_buffer[0]) {
-    case 'u':
-      current_cmd = CMD_UPDATE;
-      HAL_UART_Transmit_IT(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1);
-      
-      // Use LED1 to show which QSPI flash buffer is used for downloading
-      // OFF: even buffer, ON: odd buffer
-      if (next_qspi_buffer_index % 2) {
-        BSP_LED_On(LED1);
-      } else {
-        BSP_LED_Off(LED1);
-      }
-      
-      /* Get Firmware size and checksum */
-      HAL_UART_Receive_IT(&huart3, cmd_buffer, 5);
-      break;
-    case 'n':
-      current_cmd = CMD_NOTIFY;
-      
-      /* Calculate checksum */
-      firmware_checksum = verify_checksum((uint32_t)(next_qspi_buffer_index * FW_AREA_SIZE + 4096), firmware_size , firmware_checksum);
-      
-      /* Resonse to PC */
-      if (firmware_checksum == 0) {
-        HAL_UART_Transmit_IT(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1);
-      } else {
-        HAL_UART_Transmit_IT(&huart3, RESPONSE_NG, sizeof(RESPONSE_NG) - 1);
-      }
-      
-      /* Wait for next command */
-      HAL_UART_Receive_IT(&huart3, cmd_buffer, 1);
-      
-
-      break;
-    case 'r':
-      current_cmd = CMD_RESET;
-      
-      /* Resonse to PC */
-      HAL_UART_Transmit(&huart3, RESPONSE_OK, sizeof(RESPONSE_OK) - 1, 1000);
-      
-      DEBUG_PRINT("Reset...\r\n");
-      // Software Reset
-      HAL_NVIC_SystemReset();
-      
-      while (1) {}
-      break;
-    case 'd':
-      current_cmd = CMD_DUMMY;
-      
-      // DEBUG
-      QSPI_Memmap();
-      
-      /* Resonse to PC */
-      sprintf(buffer, "%02x", current_qspi_buffer_index & 0xFF);
-      HAL_UART_Transmit_IT(&huart3, (uint8_t*)buffer, strlen(buffer));
-      
-      /* Wait for next command */
-      HAL_UART_Receive_IT(&huart3, cmd_buffer, 1);
-      break;
-      
-    // DEBUG
-    case 'e':
-      DEBUG_PRINT("Erase Firmware header in QSPI...\r\n");
-      for (int i = 0; i < FW_AREA_NUM; i++) {
-        EXTROM_Erase(i * FW_AREA_SIZE, sizeof(fw_header_t));
-      }
-      DEBUG_PRINT("Done\r\n");
-      break;
-    }
-    
-    
-  }
-  previous_cmd = current_cmd;
-}
-
-uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum)
-{
-  uint32_t end = start + length - 1;
-  uint8_t qspi_buf[512];
-  uint32_t qspi_len = sizeof(qspi_buf);
-
-  while(start <= end)
-  {
-    if(EXTROM_Read(start, (uint32_t)qspi_buf, qspi_len) != FLASH_ERR_OK)
-    {
-      return -1;
-    }
-    for (uint32_t i = 0; i < qspi_len; i++) {
-      checksum ^= qspi_buf[i];
-    }
-    start += qspi_len;
-  }
-
-  return checksum;
-}
 
 /**
   * @brief Rx Transfer completed callback.
@@ -603,6 +314,55 @@ uint8_t verify_checksum(uint32_t start, uint32_t length, uint8_t checksum)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   cmd_received = 1;
+}
+
+/**
+  * @brief Copy object code from ROM to RAM for execution on RAM.
+  * @retval None
+  */
+#pragma section = ".ramobj"
+#pragma section = ".ramobj_init"
+#pragma section = ".ramfunc"
+#pragma section = ".ramfunc_init"
+void code_copy(void)
+{
+  uint8_t * from;
+  uint8_t * to;
+  
+  __disable_irq();
+  
+  /* Copy object code from ROM to RAM for execution on RAM */
+  from = __section_begin(".ramobj_init");
+  to   = __section_begin(".ramobj");
+  memcpy(to, from, __section_size(".ramobj_init"));
+  
+  from = __section_begin(".ramfunc_init");
+  to   = __section_begin(".ramfunc");
+  memcpy(to, from, __section_size(".ramfunc_init"));
+  
+  __enable_irq();
+}
+
+void update_firmware(void)
+{
+  uint32_t qspi_address;
+  qspi_address = current_qspi_buffer_index * FW_AREA_SIZE + FW_HEADER_SIZE;
+  DEBUG_PRINT("Update Firmware from QSPI buffer %d\r\n", current_qspi_buffer_index);
+  DEBUG_PRINT("QSPI address: 0x%08x\r\nFLASH Address: 0x%08x\r\nSize: %d bytes\r\n", qspi_address, FW_START_ADDR, current_firmware_info.size); 
+
+  FWUPDATE_ERR_CODE ret;
+  BSP_LED_On(LED2);
+  ret = FWUPDATE_Update(qspi_address, FW_START_ADDR, current_firmware_info.size);
+  BSP_LED_Off(LED2);
+  if (ret == FWUPDATE_ERR_OK) {
+    DEBUG_PRINT("Firmware Updated\r\n");
+    current_firmware_info.state = FWUPDATE_AREA_STATE_VALID; // FWUPDATE_AREA_STATE_UPDATING? for rollback?
+    FWUPDATE_Set_FW_Info(current_qspi_buffer_index, &current_firmware_info);
+  } else {
+    DEBUG_PRINT("Firmware Update Failed\r\n");
+  }
+  
+  dummy_main();
 }
 
 /* USER CODE END 4 */
@@ -615,7 +375,8 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
+  BSP_LED_On(LED3);
+  while (1) {}
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -631,7 +392,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
-     tex: DEBUG_PRINT("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

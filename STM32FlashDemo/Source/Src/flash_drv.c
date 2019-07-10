@@ -13,29 +13,19 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-// #define ROM_START_ADDRESS            0x08100000
-// #define ROM_END_ADDRESS              0x081FFFFF
-// #define ROM_FLASH_SIZE_2MB           0x200000
-
-// #define ROM_ERASE_BLOCK_SIZE_128KB   0x20000
-// #define ROM_WRITE_BLOCK_SIZE_32BYTE  32
-// #define ROM_READ_BLOCK_SIZE_4BYTE    4
-
+/* Private macro -------------------------------------------------------------*/
 // #define DEBUG
 #if defined(DEBUG)
  #define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
 #else
  #define DEBUG_PRINT(fmt, args...)
 #endif
-/* Private macro -------------------------------------------------------------*/
-
 /* Private variables ---------------------------------------------------------*/
 static FLASH_EraseInitTypeDef EraseInitStruct;
 
-
 /* Private function prototypes -----------------------------------------------*/
-// static void Flash_Print_Error(void);
-// static uint32_t GetSector(uint32_t Address);
+static void Flash_Print_Error(void);
+static uint32_t GetSector(uint32_t Address);
 
 /** 
   * @brief    FLASH Error Code 
@@ -45,35 +35,35 @@ static FLASH_EraseInitTypeDef EraseInitStruct;
 void Flash_Print_Error(void)
 {
   uint32_t ercd = HAL_FLASH_GetError();
-  if(ercd == HAL_FLASH_ERROR_NONE)         DEBUG_PRINT("[FLASH] No error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP)          DEBUG_PRINT("[FLASH] Write Protection Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS)          DEBUG_PRINT("[FLASH] Program Sequence Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB)         DEBUG_PRINT("[FLASH] Strobe Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC)          DEBUG_PRINT("[FLASH] Inconsistency Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE)          DEBUG_PRINT("[FLASH] Operation Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP)          DEBUG_PRINT("[FLASH] Read Protection Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS)          DEBUG_PRINT("[FLASH] Read Secured Error (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC)        DEBUG_PRINT("[FLASH] Single Detection ECC (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC)        DEBUG_PRINT("[FLASH] Double Detection ECC (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP_BANK1)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS_BANK1)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB_BANK1)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC_BANK1)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE_BANK1)    DEBUG_PRINT("[FLASH] Operation Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP_BANK1)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS_BANK1)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC_BANK1)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC_BANK1)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 1 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_WRP_BANK2)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_PGS_BANK2)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_STRB_BANK2)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_INC_BANK2)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OPE_BANK2)    DEBUG_PRINT("[FLASH] Operation Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDP_BANK2)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_RDS_BANK2)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_SNECC_BANK2)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_DBECC_BANK2)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 2 (0x%08x)\n", ercd);
-  if(ercd == HAL_FLASH_ERROR_OB_CHANGE)    DEBUG_PRINT("[FLASH] Option Byte Change Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_NONE)         DEBUG_PRINT("[FLASH] No error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_WRP)          DEBUG_PRINT("[FLASH] Write Protection Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_PGS)          DEBUG_PRINT("[FLASH] Program Sequence Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_STRB)         DEBUG_PRINT("[FLASH] Strobe Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_INC)          DEBUG_PRINT("[FLASH] Inconsistency Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_OPE)          DEBUG_PRINT("[FLASH] Operation Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDP)          DEBUG_PRINT("[FLASH] Read Protection Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDS)          DEBUG_PRINT("[FLASH] Read Secured Error (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_SNECC)        DEBUG_PRINT("[FLASH] Single Detection ECC (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_DBECC)        DEBUG_PRINT("[FLASH] Double Detection ECC (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_WRP_BANK1)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_PGS_BANK1)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_STRB_BANK1)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_INC_BANK1)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_OPE_BANK1)    DEBUG_PRINT("[FLASH] Operation Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDP_BANK1)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDS_BANK1)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_SNECC_BANK1)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_DBECC_BANK1)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 1 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_WRP_BANK2)    DEBUG_PRINT("[FLASH] Write Protection Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_PGS_BANK2)    DEBUG_PRINT("[FLASH] Program Sequence Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_STRB_BANK2)   DEBUG_PRINT("[FLASH] Strobe Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_INC_BANK2)    DEBUG_PRINT("[FLASH] Inconsistency Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_OPE_BANK2)    DEBUG_PRINT("[FLASH] Operation Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDP_BANK2)    DEBUG_PRINT("[FLASH] Read Protection Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_RDS_BANK2)    DEBUG_PRINT("[FLASH] Read Secured Error on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_SNECC_BANK2)  DEBUG_PRINT("[FLASH] Single Detection ECC on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_DBECC_BANK2)  DEBUG_PRINT("[FLASH] Double Detection ECC on Bank 2 (0x%08x)\n", ercd);
+  if (ercd == HAL_FLASH_ERROR_OB_CHANGE)    DEBUG_PRINT("[FLASH] Option Byte Change Error (0x%08x)\n", ercd);
 }
 
 /**
@@ -85,42 +75,42 @@ uint32_t GetSector(uint32_t Address)
 {
   uint32_t sector = 0;
   
-  if(((Address < ADDR_FLASH_SECTOR_1_BANK1) && (Address >= ADDR_FLASH_SECTOR_0_BANK1)) || \
+  if (((Address < ADDR_FLASH_SECTOR_1_BANK1) && (Address >= ADDR_FLASH_SECTOR_0_BANK1)) || \
      ((Address < ADDR_FLASH_SECTOR_1_BANK2) && (Address >= ADDR_FLASH_SECTOR_0_BANK2)))    
   {
     sector = FLASH_SECTOR_0;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_2_BANK1) && (Address >= ADDR_FLASH_SECTOR_1_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_2_BANK1) && (Address >= ADDR_FLASH_SECTOR_1_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_2_BANK2) && (Address >= ADDR_FLASH_SECTOR_1_BANK2)))    
   {
     sector = FLASH_SECTOR_1;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_3_BANK1) && (Address >= ADDR_FLASH_SECTOR_2_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_3_BANK1) && (Address >= ADDR_FLASH_SECTOR_2_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_3_BANK2) && (Address >= ADDR_FLASH_SECTOR_2_BANK2)))    
   {
     sector = FLASH_SECTOR_2;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_4_BANK1) && (Address >= ADDR_FLASH_SECTOR_3_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_4_BANK1) && (Address >= ADDR_FLASH_SECTOR_3_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_4_BANK2) && (Address >= ADDR_FLASH_SECTOR_3_BANK2)))    
   {
     sector = FLASH_SECTOR_3;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_5_BANK1) && (Address >= ADDR_FLASH_SECTOR_4_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_5_BANK1) && (Address >= ADDR_FLASH_SECTOR_4_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_5_BANK2) && (Address >= ADDR_FLASH_SECTOR_4_BANK2)))    
   {
     sector = FLASH_SECTOR_4;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_6_BANK1) && (Address >= ADDR_FLASH_SECTOR_5_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_6_BANK1) && (Address >= ADDR_FLASH_SECTOR_5_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_6_BANK2) && (Address >= ADDR_FLASH_SECTOR_5_BANK2)))    
   {
     sector = FLASH_SECTOR_5;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_7_BANK1) && (Address >= ADDR_FLASH_SECTOR_6_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_7_BANK1) && (Address >= ADDR_FLASH_SECTOR_6_BANK1)) || \
           ((Address < ADDR_FLASH_SECTOR_7_BANK2) && (Address >= ADDR_FLASH_SECTOR_6_BANK2)))    
   {
     sector = FLASH_SECTOR_6;  
   }
-  else if(((Address < ADDR_FLASH_SECTOR_0_BANK2) && (Address >= ADDR_FLASH_SECTOR_7_BANK1)) || \
+  else if (((Address < ADDR_FLASH_SECTOR_0_BANK2) && (Address >= ADDR_FLASH_SECTOR_7_BANK1)) || \
           ((Address < FLASH_END_ADDR) && (Address >= ADDR_FLASH_SECTOR_7_BANK2)))
   {
      sector = FLASH_SECTOR_7;  
@@ -155,25 +145,24 @@ int32_t FLASH_Init(void)
   */
 int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
 {
-  // uint32_t FlashAddress = start;
   uint32_t FirstSector = 0, NbOfSectors = 0;
   uint32_t SECTORError = 0;
   uint32_t end = start + num_bytes - 1;
   int32_t  ret = FLASH_ERR_OK;
 
   /* Check the parameters */
-  if(!(IS_FLASH_PROGRAM_ADDRESS(start)))
+  if (!(IS_FLASH_PROGRAM_ADDRESS(start)))
   {
     ret = FLASH_ERR_PARAM;
   }
   
-  if( !(IS_FLASH_PROGRAM_ADDRESS(start + num_bytes -1)) )
+  if (!(IS_FLASH_PROGRAM_ADDRESS(start + num_bytes -1)))
   {
     ret = FLASH_ERR_PARAM;
   }
   
   /* Select Bank to erase */
-  if( IS_FLASH_PROGRAM_ADDRESS_BANK1(start) )
+  if (IS_FLASH_PROGRAM_ADDRESS_BANK1(start))
   {
     /* Get the 1st sector to erase */
     FirstSector = GetSector(start);
@@ -187,7 +176,7 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
     EraseInitStruct.Sector        = FirstSector;
     EraseInitStruct.NbSectors     = NbOfSectors;
   }
-  else if( IS_FLASH_PROGRAM_ADDRESS_BANK2(start) )
+  else if (IS_FLASH_PROGRAM_ADDRESS_BANK2(start))
   {
     /* Get the 1st sector to erase */
     FirstSector = GetSector(start);
@@ -203,6 +192,7 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
   }
   else
   {
+    // Should never get here
     return FLASH_ERR_FATAL;
   }
  
@@ -216,6 +206,7 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
       SECTORError will contain the faulty sector and then to know the code error on this sector,
       user can call function 'HAL_FLASH_GetError()'
     */
+    Flash_Print_Error();
     ret = FLASH_ERR_FATAL;
   }
   HAL_FLASH_Lock();
@@ -234,28 +225,26 @@ int32_t FLASH_Erase(uint32_t start, uint32_t num_bytes)
   */
 int32_t FLASH_Read(uint32_t src, uint32_t dst, uint32_t num_bytes)
 {
-  uint32_t FlashAddress = src;
   const uint32_t block_size_max = 8;
   uint32_t block_size;
-  __IO uint64_t *src_addr = (__IO uint64_t *)src;
-  __IO uint64_t *dest_addr = (__IO uint64_t*)dst;
-  // __IO uint64_t data64 = 0;
+  uint64_t *src_addr = (uint64_t*)src;
+  uint64_t *dest_addr = (uint64_t*)dst;
   uint32_t count = num_bytes;
  
   /* Check the parameters */
-  if( !(IS_FLASH_PROGRAM_ADDRESS(src)) )
+  if (!(IS_FLASH_PROGRAM_ADDRESS(src)))
   {
     return FLASH_ERR_PARAM;
   }
   
-  if( !(IS_FLASH_PROGRAM_ADDRESS(src + num_bytes -1)) )
+  if (!(IS_FLASH_PROGRAM_ADDRESS(src + num_bytes -1)))
   {
     return FLASH_ERR_PARAM;
   }
   
   while (count > 0)
   {
-    if(count < block_size_max)
+    if (count < block_size_max)
     {
       block_size = count;
     } else
@@ -282,22 +271,19 @@ int32_t FLASH_Read(uint32_t src, uint32_t dst, uint32_t num_bytes)
   */
 int32_t FLASH_Write(uint32_t src, uint32_t dst, uint32_t num_bytes)
 {
-  // HAL_StatusTypeDef status = HAL_ERROR;
   uint32_t FlashAddress = dst;
-  const uint32_t end_addr = dst + num_bytes - 1;
   uint64_t DataAddress = (uint64_t)src;
-  // uint8_t row_index = 4;
   uint32_t block_size_max = 32; // 256 bit
   uint32_t block_size = 0;
   uint32_t count = 0;
 
   /* Check the parameters */
-  if( !(IS_FLASH_PROGRAM_ADDRESS(dst)) )
+  if (!(IS_FLASH_PROGRAM_ADDRESS(dst)))
   {
     return FLASH_ERR_PARAM;
   }
   
-  if( !(IS_FLASH_PROGRAM_ADDRESS(dst + num_bytes -1)) )
+  if (!(IS_FLASH_PROGRAM_ADDRESS(dst + num_bytes -1)))
   {
     return FLASH_ERR_PARAM;
   }
@@ -308,7 +294,7 @@ int32_t FLASH_Write(uint32_t src, uint32_t dst, uint32_t num_bytes)
 
   while (count > 0)
   {
-    if(count < block_size_max)
+    if (count < block_size_max)
     {
       block_size = count;
     } else

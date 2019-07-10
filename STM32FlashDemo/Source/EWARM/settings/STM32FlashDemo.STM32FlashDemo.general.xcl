@@ -2,7 +2,7 @@
 
 "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\arm\bin\armstlink2.dll" 
 
-"D:\GitHub\7_STM32_QSPI\STM32FlashDemo\Source\EWARM\STM32FlashDemo\Exe\STM32FlashDemo.out" 
+"D:\GitHub\STM32_QSPI_Demo\STM32FlashDemo\Source\EWARM\STM32FlashDemo\Exe\STM32FlashDemo.out" 
 
 --plugin="C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\arm\bin\armbat.dll" 
 

@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "D:\GitHub\7_STM32_QSPI\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.general.xcl" --backend -f "D:\GitHub\7_STM32_QSPI\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "D:\GitHub\STM32_QSPI_Demo\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.general.xcl" --backend -f "D:\GitHub\STM32_QSPI_Demo\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "D:\GitHub\7_STM32_QSPI\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.general.xcl" "--debug_file=%~1" --backend -f "D:\GitHub\7_STM32_QSPI\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.2\common\bin\cspybat" -f "D:\GitHub\STM32_QSPI_Demo\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.general.xcl" "--debug_file=%~1" --backend -f "D:\GitHub\STM32_QSPI_Demo\STM32FlashDemo\Source\EWARM\settings\STM32FlashDemo.STM32FlashDemo.driver.xcl" 
 
 @echo off 
 :end
